@@ -1,0 +1,6 @@
+{
+  "name": "Simple Kademlia",
+  "scripts": {
+    "start": "examples/start.js"
+  }
+}
