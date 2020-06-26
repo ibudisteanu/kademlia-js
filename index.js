@@ -5,6 +5,8 @@ const Config = require('./src/config')
 const Contact = require('./src/contact/contact')
 const RoutingTable = require('./src/routing-table')
 
+const KademliaNodeMock = require('./src/implementations/kademlia-node-mock')
+
 module.exports = {
 
     init(config ={} ) {
@@ -22,5 +24,9 @@ module.exports = {
 
     Store,
     StoreMemory,
+
+    implementations:{
+        KademliaNodeMock,
+    }
 
 }

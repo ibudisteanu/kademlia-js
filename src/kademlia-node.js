@@ -72,6 +72,7 @@ module.exports = class KademliaNode {
             if (out) cb(out)
             else cb( this.routingTable.getClosestToKey(key) )
         })
+
     }
 
 }

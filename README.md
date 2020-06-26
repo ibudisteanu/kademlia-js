@@ -1,6 +1,8 @@
-# Kademlia in JS
+# Kademlia DHT in JS
 
 #### Kademlia is eazy!
+
+Kademlia is a Distributed Hash Table.
 
 Protocol messages
 Kademlia has four messages.
@@ -12,3 +14,6 @@ Kademlia has four messages.
 `FIND_NODE` — The recipient of the request will return the k nodes in his own buckets that are the closest ones to the requested key.
 
 `FIND_VALUE` — Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
+
+### Implementation
+The reason it is pure JS is to make it low-latency. Promises and Async slow down the requests.
