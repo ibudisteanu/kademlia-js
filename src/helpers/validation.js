@@ -11,6 +11,11 @@ module.exports = {
     validateIdentity(identity){
         if (!Buffer.isBuffer(identity)) throw "Identity is not Buffer"
         if ( identity.length !== global.KAD_OPTIONS.NODE_ID_LENGTH ) throw "Identity length is invalid"
+    },
+
+    validateLookup(identity){
+        if (!Buffer.isBuffer(identity)) throw "Identity is not Buffer"
+        if ( identity.length !== global.KAD_OPTIONS.NODE_ID_LENGTH ) throw "Identity length is invalid"
     }
 
 }

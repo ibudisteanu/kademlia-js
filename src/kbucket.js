@@ -19,7 +19,7 @@ module.exports = class KBucket extends Array {
                 distance: BufferUtils.xorDistance(this[i].contact.identity, key )
             })
 
-        return contacts.sort((a,b)=> BufferUtils.compareKeyBuffers(a, b) )
+        return contacts.sort((a,b)=> BufferUtils.compareKeyBuffers(a.distance, b.distance) )
             .filter( a => !a.contact.identity.equals(key) )
             .splice(0, count)
 

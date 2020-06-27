@@ -21,6 +21,7 @@ async function run(){
 
     //encountering
     nodes[0].join( contacts[1] );
+    nodes[0].join( contacts[2] );
     nodes[1].join( contacts[2] );
     nodes[2].join( contacts[3] );
     nodes[2].join( contacts[4] );
@@ -28,9 +29,15 @@ async function run(){
 
     console.log("Simple KAD");
 
-    await nodes[0].store('store', 'value');
-    let out = await nodes[0].findValue('store')
-    if (out !== 'value' ) throw "findValue didn't return the right value"
+    let query = KAD.helpers.StringUtils.genHexString(40);
+    await nodes[0].store(undefined, query, 'value');
+    let out = await nodes[0].findValue(undefined, query)
+    if (out.out !== 'value' ) throw "findValue didn't return the right value"
+
+    out = await nodes[0].findValue(undefined, KAD.helpers.StringUtils.genHexString(40) );
+    if (out.list.length !== 2) throw 'fidnValue returned something';
+
+
 
 }
 

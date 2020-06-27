@@ -7,6 +7,10 @@ const RoutingTable = require('./src/routing-table')
 
 const KademliaNodeMock = require('./src/implementations/kademlia-node-mock')
 
+const BufferUtils = require('./src/helpers/buffer-utils')
+const StringUtils = require('./src/helpers/string-utils')
+const Validation = require('./src/helpers/validation')
+
 module.exports = {
 
     init(config ={} ) {
@@ -24,6 +28,12 @@ module.exports = {
 
     Store,
     StoreMemory,
+
+    helpers:{
+        BufferUtils,
+        StringUtils,
+        Validation,
+    },
 
     implementations:{
         KademliaNodeMock,
