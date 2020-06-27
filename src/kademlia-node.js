@@ -48,12 +48,21 @@ module.exports = class KademliaNode {
          is closer than the closest in that list, then store the key/value
          on the new node (per section 2.5 of the paper)
      */
-    welcomeIfNewNode(contact){
+    welcomeIfNewNode(contact, iterator){
 
         if (this.routingTable.map[ contact.identityHex ])
             return false;
 
-        for (const key in this._store.map ){
+        if (!iterator ) {
+            iterator = this._store.iterator();
+            this.join(contact)
+        }
+
+        while (!iterator.done) {
+
+            const key = iterator.value[0];
+            const value = iterator.value[1].data;
+
             const keyNode = Buffer.from(key, 'hex');
             const neighbors = this.routingTable.getClosestToKey(contact.identity)
 
@@ -64,14 +73,19 @@ module.exports = class KademliaNode {
                 const first = BufferUtils.xorDistance( neighbors[0].identity, keyNode );
                 thisClosest = Buffer.compare( BufferUtils.xorDistance( this.contact.identity, keyNode ), first)
             }
+
             if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 ) ) {
-                const value = this._store.map[key]
-                //TODO!!
-                //call_store(node, key, value)
+                this.rules.sendStore(contact, key, value, out => {
+                    if (out) {
+                        iterator.next();
+                        setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 1000)
+                    }
+                });
+                break;
             }
+
         }
 
-        this.join(contact)
 
     }
 

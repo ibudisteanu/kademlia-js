@@ -13,7 +13,9 @@ module.exports.validateIdentity = (identity, text='Identity') => {
 
 module.exports.validateLookup = (lookup) => module.exports.validateIdentity(lookup, 'Lookup');
 
-module.exports.validateStoreKey = (key) => module.exports.validateIdentity(key, 'Key');
+module.exports.validateStoreKey = (key) => {
+    if (typeof key !== "string" && key.length !== global.KAD_OPTIONS.NODE_ID_LENGTH*2 ) throw "Key is invalid";
+}
 
 module.exports.validateStoreData = (data) => {
     if (typeof data !== 'string' || data.length === 0) throw "data is invalid";

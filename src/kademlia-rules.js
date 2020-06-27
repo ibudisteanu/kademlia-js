@@ -46,7 +46,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
-        this._kademliaNode._store.put(key, {
+        this._kademliaNode._store.put(key.toString('hex'), {
             data: value,
             expiry: new Date().getTime() + global.KAD_OPTIONS.STORE_EXPIRY_TIME,
         }, cb )
@@ -87,7 +87,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
-        this._kademliaNode._store.get(key, (out) => {
+        this._kademliaNode._store.get(key.toString('hex'), (out) => {
             //found the data
             if (out) cb({out: out.data})
             else cb( {list: this._kademliaNode.routingTable.getClosestToKey(key) } )
