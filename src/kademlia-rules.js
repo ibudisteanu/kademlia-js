@@ -2,8 +2,9 @@ const Validation = require('./helpers/validation')
 
 module.exports = class KademliaRules {
 
-    constructor(kademliaNode) {
+    constructor(kademliaNode, store) {
         this._kademliaNode = kademliaNode;
+        this._store = store;
     }
 
     send(destContact, command, data, cb){
@@ -46,10 +47,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
-        this._kademliaNode._store.put(key.toString('hex'), {
-            data: value,
-            expiry: new Date().getTime() + global.KAD_OPTIONS.STORE_EXPIRY_TIME,
-        }, cb )
+        this._store.put(key.toString('hex'), value, cb);
     }
 
     sendStore(contact, key, value, cb){
@@ -87,9 +85,9 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
-        this._kademliaNode._store.get(key.toString('hex'), (out) => {
+        this._store.get(key.toString('hex'), (out) => {
             //found the data
-            if (out) cb({out: out.data})
+            if (out) cb({out: out})
             else cb( {list: this._kademliaNode.routingTable.getClosestToKey(key) } )
         })
 

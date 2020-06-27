@@ -6,10 +6,15 @@ module.exports = class StoreMemory extends Store{
     constructor() {
         super();
         this._memory = new Map();
+        this._memoryExpiration = new Map();
     }
 
     iterator(){
         return this._memory.entries().next();
+    }
+
+    _iteratorExpiration(){
+        return this._memoryExpiration.entries().next();
     }
 
     get(key, cb){
@@ -20,10 +25,13 @@ module.exports = class StoreMemory extends Store{
     put(key, value, cb){
 
         Validation.validateStoreKey(key);
-        Validation.validateStoreData(value.data)
+        Validation.validateStoreData(value)
 
         this._memory.set( key, value );
-        cb( true );
+        this._putExpiration(key, new Date().getTime() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
+            cb( true );
+        });
+
     }
 
     del(key, cb){
@@ -32,6 +40,28 @@ module.exports = class StoreMemory extends Store{
 
         if (this._memory.get(key)) {
             this._memory.delete(key);
+            this._memory._delExpiration(key);
+            this.delExpiration(key, ()=>{
+                cb(true)
+            })
+        } else
+            cb(false);
+    }
+
+
+    _getExpiration(key, cb){
+        cb( this._memoryExpiration.get(key+':exp') );
+    }
+
+    _putExpiration(key, time, cb){
+        this._memoryExpiration.set(key+':exp', time);
+        cb(true);
+    }
+
+    _delExpiration(key, cb){
+
+        if (this._memory.get(key)) {
+            this._memoryExpiration.delete(key + ':exp');
             cb(true)
         } else
             cb(false);

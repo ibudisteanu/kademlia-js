@@ -7,8 +7,8 @@ module.exports = class RoutingTable {
 
         this._kademliaNode = kademliaNode;
 
-        this.list = new Array(global.KAD_OPTIONS.BUCKETS_COUNT).fill( null );
-        this.list = this.list.map( (it, index) =>  new KBucket(index) );
+        this.buckets = new Array(global.KAD_OPTIONS.BUCKETS_COUNT).fill( null );
+        this.buckets = this.buckets.map( (it, index) =>  new KBucket(index) );
         this.map = {};
         this.count = 0;
     }
@@ -31,10 +31,10 @@ module.exports = class RoutingTable {
         const bucketIndex = this.getBucketIndex( contact.identity );
         if (bucketIndex === 0) return false; //they are both the same
 
-        if (this.list[bucketIndex].length === global.KAD_OPTIONS.BUCKET_COUNT_K)
+        if (this.buckets[bucketIndex].length === global.KAD_OPTIONS.BUCKET_COUNT_K)
             return false; //I have already too many in the bucket
 
-        this.list[bucketIndex].push({
+        this.buckets[bucketIndex].push({
             contact,
             bucketIndex,
             availability: 1, //already available
@@ -56,10 +56,10 @@ module.exports = class RoutingTable {
         const bucketIndex = contact.bucketIndex;
 
         //new search, because the position could have been changed
-        const index = this.list[contact.bucketIndex].findContactByIdentity(contact.identity);
+        const index = this.buckets[contact.bucketIndex].findContactByIdentity(contact.identity);
 
         if (index !== -1) {
-            this.list.splice(index, 1);
+            this.buckets.splice(index, 1);
             delete this.map[contact.identityHex];
             this.count -= 1;
         }
@@ -68,11 +68,11 @@ module.exports = class RoutingTable {
 
     _refreshBuckets(){
 
-        const bucketIndex = Math.floor( Math.random() * this.list.length );
+        const bucketIndex = Math.floor( Math.random() * this.buckets.length );
 
-        if (this.list[bucketIndex].length > 0) {
-            const contactIndex = Math.floor(Math.random() * this.list[bucketIndex].length);
-            const contact = this.list[bucketIndex][contactIndex];
+        if (this.buckets[bucketIndex].length > 0) {
+            const contactIndex = Math.floor(Math.random() * this.buckets[bucketIndex].length);
+            const contact = this.buckets[bucketIndex][contactIndex];
 
             //check availability
             let online = true;
@@ -94,7 +94,7 @@ module.exports = class RoutingTable {
     }
 
     _sortBucket(bucketIndex){
-        this.list[ this.map[ bucketIndex ] ].sort( (a,b) => a-b  );
+        this.buckets[ this.map[ bucketIndex ] ].sort( (a,b) => a-b  );
     }
 
     getBucketIndex(foreignNodeKey){
@@ -129,7 +129,7 @@ module.exports = class RoutingTable {
 
         const _addNearestFromBucket = bucket => {
 
-            const entries = this.list[bucket].getBucketClosestToKey( key, count );
+            const entries = this.buckets[bucket].getBucketClosestToKey( key, count );
             entries.splice(0, count - contactResults.length)
                 .forEach( contact => {
                     if (contactResults.length < count)

@@ -7,6 +7,7 @@ module.exports = {
 
     T_BUCKET_REFRESH: 5000, //time to check the status of a node
 
-    STORE_EXPIRY_TIME: 3600000,
+    T_STORE_KEY_EXPIRY: 3600000,
+    T_STORE_GARBAGE_COLLECTOR: 100,
 
 }

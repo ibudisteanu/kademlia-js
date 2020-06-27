@@ -10,7 +10,7 @@ module.exports = class KademliaNode {
         this.contact = contact;
         this._store = store;
         this.routingTable = new RoutingTable(this);
-        this.rules = new (options.KademliaRules || KademliaRules) (this);
+        this.rules = new (options.KademliaRules || KademliaRules) (this, store);
 
     }
 
@@ -19,12 +19,14 @@ module.exports = class KademliaNode {
         this._start = true;
         this.routingTable.start();
         this.rules.start();
+        this._store.start();
     }
 
     stop() {
         if (!this._start) throw "Already stopped";
         this.routingTable.stop();
         this.rules.stop();
+        this._store.stop();
         this._start = false;
     }
 
@@ -61,7 +63,7 @@ module.exports = class KademliaNode {
         while (!iterator.done) {
 
             const key = iterator.value[0];
-            const value = iterator.value[1].data;
+            const value = iterator.value[1];
 
             const keyNode = Buffer.from(key, 'hex');
             const neighbors = this.routingTable.getClosestToKey(contact.identity)

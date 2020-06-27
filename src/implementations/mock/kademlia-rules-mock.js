@@ -2,8 +2,8 @@ const KademliaRules = require('../../kademlia-rules')
 
 module.exports = class KademliaRulesMock extends KademliaRules {
 
-    constructor(kademliaNode) {
-        super(kademliaNode);
+    constructor(kademliaNode, store) {
+        super(kademliaNode, store);
     }
 
     start() {
