@@ -1,14 +1,16 @@
 const Validation = require('./helpers/validation')
 const RoutingTable = require('./routing-table')
 const BufferUtils = require('./helpers/buffer-utils')
+const KademliaRules = require('./kademlia-rules')
 
 module.exports = class KademliaNode {
 
-    constructor(contact, store) {
+    constructor(contact, store, options = {}) {
 
         this.contact = contact;
         this._store = store;
         this.routingTable = new RoutingTable(this);
+        this.rules = new (options.KademliaRules || KademliaRules) (this);
 
     }
 
@@ -16,11 +18,13 @@ module.exports = class KademliaNode {
         if (this._start) throw "Already started";
         this._start = true;
         this.routingTable.start();
+        this.rules.start();
     }
 
     stop() {
         if (!this._start) throw "Already stopped";
         this.routingTable.stop();
+        this.rules.stop();
         this._start = false;
     }
 
@@ -32,71 +36,6 @@ module.exports = class KademliaNode {
      */
     join(contact) {
         this.routingTable.addContact(contact)
-    }
-
-    /**
-     * used to verify that a node is still alive.
-     * @param cb
-     */
-    ping(sourceContact, cb) {
-
-        if (sourceContact) this.welcomeIfNewNode(sourceContact);
-
-        cb(true);
-    }
-
-    /**
-     * Stores a (key, value) pair in one node.
-      * @param key
-     * @param value
-     * @param cb
-     */
-    store(sourceContact, key, value, cb) {
-
-        if (typeof key === "string")  key = Buffer.from(key, 'hex');
-        Validation.validateLookup(key);
-
-        if (sourceContact) this.welcomeIfNewNode(sourceContact);
-
-        this._store.put(key, {
-            data: value,
-            expiry: new Date().getTime() + global.KAD_OPTIONS.STORE_EXPIRY_TIME,
-        }, cb)
-    }
-
-    /**
-     * The recipient of the request will return the k nodes in his own buckets that are the closest ones to the requested key.
-     * @param key
-     * @param cb
-     */
-    findNode( sourceContact, key, cb ){
-
-        if (typeof key === "string")  key = Buffer.from(key, 'hex');
-        Validation.validateLookup(key);
-
-        if (sourceContact) this.welcomeIfNewNode(sourceContact);
-
-        cb( this.routingTable.getClosestToKey(key) );
-    }
-
-    /**
-     * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
-     * @param key
-     * @param cb
-     */
-    findValue(sourceContact, key, cb){
-
-        if (typeof key === "string")  key = Buffer.from(key, 'hex');
-        Validation.validateLookup(key);
-
-        if (sourceContact) this.welcomeIfNewNode(sourceContact);
-
-        this._store.get(key, (out) => {
-            //found the data
-            if (out) cb({out: out.data})
-            else cb( {list: this.routingTable.getClosestToKey(key) } )
-        })
-
     }
 
     /**

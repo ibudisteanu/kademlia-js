@@ -1,4 +1,5 @@
 const Store = require('./store')
+const Validation = require ('./../helpers/validation')
 
 module.exports = class StoreMemory extends Store{
 
@@ -8,15 +9,23 @@ module.exports = class StoreMemory extends Store{
     }
 
     get(key, cb){
+        Validation.validateStoreKey(key);
         cb( this._memory[key] );
     }
 
     put(key, value, cb){
-        this._memory[key] = value;
-        cb( value );
+
+        Validation.validateStoreKey(key);
+        Validation.validateStoreData(value.data)
+
+        this._memory[ key ] = value;
+        cb( true );
     }
 
     del(key, cb){
+
+        Validation.validateStoreKey(key);
+
         if (this._memory[key]) {
             delete this._memory[key];
             cb(true)

@@ -1,21 +1,20 @@
-module.exports = {
+module.exports.validateIp = (ip) => {
+    if (typeof ip !== "string" || ip.length < 5) throw "invalid IP";
+}
 
-    validateIp(ip){
-        if (typeof ip !== "string" || ip.length < 5) throw "invalid IP";
-    },
+module.exports.validatePort = (port) => {
+    if (typeof port !== "number" || port < 1000 || port > 65535) throw "invalid port";
+}
 
-    validatePort(port){
-        if (typeof port !== "number" || port < 1000 || port > 65535) throw "invalid port";
-    },
+module.exports.validateIdentity = (identity, text='Identity') => {
+    if (!Buffer.isBuffer(identity)) throw `${text} is not Buffer`
+    if ( identity.length !== global.KAD_OPTIONS.NODE_ID_LENGTH ) throw `${text} length is invalid`
+}
 
-    validateIdentity(identity){
-        if (!Buffer.isBuffer(identity)) throw "Identity is not Buffer"
-        if ( identity.length !== global.KAD_OPTIONS.NODE_ID_LENGTH ) throw "Identity length is invalid"
-    },
+module.exports.validateLookup = (lookup) => module.exports.validateIdentity(lookup, 'Lookup');
 
-    validateLookup(identity){
-        if (!Buffer.isBuffer(identity)) throw "Identity is not Buffer"
-        if ( identity.length !== global.KAD_OPTIONS.NODE_ID_LENGTH ) throw "Identity length is invalid"
-    }
+module.exports.validateStoreKey = (key) => module.exports.validateIdentity(key, 'Key');
 
+module.exports.validateStoreData = (data) => {
+    if (typeof data !== 'string' || data.length === 0) throw "data is invalid";
 }

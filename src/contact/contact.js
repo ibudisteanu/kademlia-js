@@ -14,4 +14,8 @@ module.exports = class Contact{
         this.identityHex = identity.toString('hex')
     }
 
+    clone(){
+        return new Contact(this.ip, this.port, Buffer.from( this.identityHex, 'hex') );
+    }
+
 }
