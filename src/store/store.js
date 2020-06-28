@@ -51,14 +51,16 @@ module.exports = class Store{
 
     _expireOldKeys(){
 
-        if (!this._expirationIterator || this._expirationIterator.done)
+        if (!this._expirationIterator || this._expirationIterator.done) {
             this._expirationIterator = this._iteratorExpiration();
+            this._expirationIterator.next();
+        }
 
         if (!this._expirationIterator.done){
             const time = this._expirationIterator[1];
             if (time < Date.now() ){
                 const key = this._expirationIterator[0].splice(0, this._expirationIterator[0].length-4 );
-                this.del(key, ()=> this._createTimeoutExpireOldKeys() )
+                this.del(key, this._createTimeoutExpireOldKeys.bind(this) )
             }
         } else {
             this._createTimeoutExpireOldKeys();

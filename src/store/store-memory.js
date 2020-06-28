@@ -10,11 +10,11 @@ module.exports = class StoreMemory extends Store{
     }
 
     iterator(){
-        return this._memory.entries().next();
+        return this._memory.entries();
     }
 
     _iteratorExpiration(){
-        return this._memoryExpiration.entries().next();
+        return this._memoryExpiration.entries();
     }
 
     get(key, cb){
@@ -40,7 +40,7 @@ module.exports = class StoreMemory extends Store{
 
         if (this._memory.get(key)) {
             this._memory.delete(key);
-            this._memory._delExpiration(key);
+            this._delExpiration(key);
             this.delExpiration(key, ()=>{
                 cb(null, true)
             })

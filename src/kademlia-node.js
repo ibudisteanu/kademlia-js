@@ -71,10 +71,11 @@ module.exports = class KademliaNode {
 
         if (!iterator ) {
             iterator = this._store.iterator();
+            iterator.next();
             this.routingTable.addContact(contact);
         }
 
-        while (!iterator.done) {
+        while (!iterator.done && iterator.value) {
 
             const key = iterator.value[0];
             const value = iterator.value[1];
@@ -98,7 +99,8 @@ module.exports = class KademliaNode {
                     }
                 });
                 return;
-            }
+            } else
+                iterator.next();
 
         }
 
