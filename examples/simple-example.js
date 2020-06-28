@@ -41,4 +41,6 @@ nodes[0].rules.receive(undefined, 'FIND_VALUE', [KAD.helpers.StringUtils.genHexS
     if (out.list.length !== 2) throw 'fidnValue returned something';
 } );
 
-
+nodes[4].crawler.iterativeFindNode(query, (err, out)=>{
+    console.log(out);
+})

@@ -73,7 +73,7 @@ module.exports = class RoutingTable {
             const contactItem = this.buckets[bucketIndex][contactIndex];
 
             //check availability
-            this._kademliaNode.rules.sendPing(contactItem.contact, (err, out)=>{
+            this._kademliaNode.rules.sendPing(contactItem, (err, out)=>{
 
                 if (!err && out === true){
                     contactItem.pingLastCheck = Date.now();
@@ -124,7 +124,13 @@ module.exports = class RoutingTable {
 
 
 
-    getClosestToKey(key, count = global.KAD_OPTIONS.BUCKET_COUNT_K){
+    getClosestToKey(key, count = global.KAD_OPTIONS.BUCKET_COUNT_K, initList){
+
+        let initMap;
+        if (initList){
+            initMap = {}
+            initList.forEach( it => initMap[it.contact.identityHex] = true );
+        }
 
         const bucketIndex = this.getBucketIndex(key);
         const contactResults = [];
@@ -132,11 +138,13 @@ module.exports = class RoutingTable {
         const _addNearestFromBucket = bucket => {
 
             const entries = this.buckets[bucket].getBucketClosestToKey( key, count );
-            entries.splice(0, count - contactResults.length)
-                .forEach( contact => {
-                    if (contactResults.length < count)
-                        contactResults.push(contact);
-                });
+            for (let i = 0; i < entries.length; i++)
+                if (contactResults.length === count ) break;
+                else {
+                    if (initMap && initMap[ entries[i].contact.identityHex ]) continue;
+                    contactResults.push(entries[i]);
+                }
+
         }
 
         let ascIndex = bucketIndex+1;
@@ -150,6 +158,8 @@ module.exports = class RoutingTable {
         while (contactResults.length < count && ascIndex < global.KAD_OPTIONS.BUCKETS_COUNT)
             _addNearestFromBucket(ascIndex++);
 
+        //TODO verifiy if contactResults always returned sorted by distance...
+        if (initList) contactResults.sort( (a,b)=> BufferUtils.compareKeyBuffers(a.distance, b.distance) );
         return contactResults;
 
     }

@@ -2,7 +2,7 @@ const async = require('async')
 const RoutingTable = require('./routing-table')
 const BufferUtils = require('./helpers/buffer-utils')
 const KademliaRules = require('./kademlia-rules')
-const Crawler = require('./crawler')
+const Crawler = require('./crawler/crawler')
 
 module.exports = class KademliaNode {
 
@@ -51,14 +51,7 @@ module.exports = class KademliaNode {
     join(contact, cb) {
         this.routingTable.addContact(contact);
 
-        async.series([
-            next => this.crawler.iterativeFindNode( this.contact.identity, next ),
-        ], (err, out)=>{
-
-            if (err) cb(err);
-            else cb(null, out );
-        })
-
+        this.crawler.iterativeFindNode( this.contact.identity, cb );
     }
 
     /**
