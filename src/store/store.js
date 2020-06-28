@@ -5,7 +5,7 @@ module.exports = class Store{
     }
 
     start(){
-        if (this._started) return false;
+        if (this._start) throw "Store already started";
 
         this._started = true;
         if (!this._timeoutExpireOldKeys) {
@@ -13,20 +13,16 @@ module.exports = class Store{
             this._createTimeoutExpireOldKeys();
         }
 
-        return true;
     }
 
     stop(){
-
-        if (!this._started) return false;
+        if (!this._start) throw "Stor already closed";
 
         if (this._timeoutExpireOldKeys) {
             clearTimeout(this._timeoutExpireOldKeys)
             this._timeoutExpireOldKeys = undefined;
         }
         this._started = false;
-
-        return true;
     }
 
     iterator(){

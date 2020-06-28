@@ -31,13 +31,24 @@ module.exports = class KademliaNode {
     }
 
     /**
+     * Bootstrap by connecting to other known node in the network.
+     */
+    bootstrap(contact, cb){
+        if (this.routingTable.map[contact.identityHex]) return cb(true); //already
+
+        this.join(contact, cb)
+    }
+
+    /**
      * Inserts the given contact into the routing table and uses it to perform
      * a find node for this node's identity,
      * then refreshes all buckets further than it's closest neighbor, which will
      * be in the occupied bucket with the lowest index
      */
-    join(contact) {
-        this.routingTable.addContact(contact)
+    join(contact, cb) {
+        this.routingTable.addContact(contact);
+
+        this.rules.sendFindNode(this.contact, this.contact.identity, cb);
     }
 
     /**
@@ -83,7 +94,7 @@ module.exports = class KademliaNode {
                         setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 1000)
                     }
                 });
-                break;
+                return;
             }
 
         }

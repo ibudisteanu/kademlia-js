@@ -69,8 +69,8 @@ module.exports = class KademliaRules {
         cb( this._kademliaNode.routingTable.getClosestToKey(key) );
     }
 
-    sendFindNode(contact, key){
-        this.send(contact, 'SEND_STORE', [key]);
+    sendFindNode(contact, key, cb){
+        this.send(contact, 'SEND_STORE', [key], cb);
     }
 
     /**
@@ -93,8 +93,8 @@ module.exports = class KademliaRules {
 
     }
 
-    sendFindValue(contact, key){
-        this.send(contact, 'FIND_VALUE', [key]);
+    sendFindValue(contact, key, cb){
+        this.send(contact, 'FIND_VALUE', [key], cb);
     }
 
 }
