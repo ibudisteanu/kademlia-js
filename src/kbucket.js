@@ -8,6 +8,13 @@ module.exports = class KBucket extends Array {
         this.bucketIndex = bucketIndex;
     }
 
+    get tail(){
+        return this[this.length-1];
+    }
+
+    get head(){
+        return this[0];
+    }
 
     getBucketClosestToKey( key, count =  global.KAD_OPTIONS.BUCKET_COUNT_K ){
 
@@ -15,8 +22,8 @@ module.exports = class KBucket extends Array {
 
         for (let i=0; i < this.length; i++ )
             contacts.push({
-                contact: this[i].contact,
-                distance: BufferUtils.xorDistance(this[i].contact.identity, key )
+                contact: this[i],
+                distance: BufferUtils.xorDistance(this[i].identity, key )
             })
 
         return contacts.sort((a,b)=> BufferUtils.compareKeyBuffers(a.distance, b.distance) )

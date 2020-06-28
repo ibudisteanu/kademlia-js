@@ -2,5 +2,8 @@
   "name": "Simple Kademlia",
   "scripts": {
     "start": "examples/simple-example.js"
+  },
+  "dependencies": {
+    "async": "^3.2.0"
   }
 }

@@ -23,31 +23,30 @@ module.exports = class RoutingTable {
 
     addContact(contact){
 
+        if (contact.identity.equals( this._kademliaNode.contact.identity) )
+            return [false];
+
         if (this.map[contact.identityHex]) {  //already have it
             this._refreshContactItem(this.map[contact.identityHex]);
-            return false;
+            return [false, this.map[contact.identityHex].bucketIndex, -1, true];
         }
 
         const bucketIndex = this.getBucketIndex( contact.identity );
-        if (bucketIndex === 0) return false; //they are both the same
 
         if (this.buckets[bucketIndex].length === global.KAD_OPTIONS.BUCKET_COUNT_K)
-            return false; //I have already too many in the bucket
+            return [false, bucketIndex, -1, false]; //I have already too many in the bucket
 
-        this.buckets[bucketIndex].push({
-            contact,
-            bucketIndex,
-            lastCheck: new Date().getTime(),
-        });
-        this.map[contact.identityHex] = contact;
+        const newContact = contact.clone();
+        newContact.bucketIndex = bucketIndex;
+        newContact.pingLastCheck = Date.now();
+        newContact.pingResponded = null;
+        this.buckets[bucketIndex].push( newContact );
+        this.map[contact.identityHex] = newContact;
         this.count += 1;
 
-        return true;
+        return [true, bucketIndex, this.buckets, this.buckets[bucketIndex].length-1 ];
     }
 
-    retrieve(){
-
-    }
 
     removeContact(contact){
 
@@ -77,11 +76,12 @@ module.exports = class RoutingTable {
             this._kademliaNode.rules.sendPing(contactItem.contact, (err, out)=>{
 
                 if (!err && out === true){
-                    contactItem.lastCheck = new Date().getTime();
+                    contactItem.pingLastCheck = Date.now();
+                    contactItem.pingResponded = true;
                     this._refreshContactItem(contactItem);
                 } else{
                     //offline, let's remove it
-                    this.removeContact(contactItem.contact);
+                    contactItem.pingResponded = false;
                 }
 
             });
@@ -90,13 +90,13 @@ module.exports = class RoutingTable {
         this._timeoutRefreshBucket = setTimeout( this._refreshBuckets.bind(this), global.KAD_OPTIONS.T_BUCKET_REFRESH );
     }
 
-    _refreshContactItem(contactItem){
-        contactItem.lastCheck = new Date().getTime();
-        this._sortBucket(contactItem.bucketIndex);
+    _refreshContactItem(contact){
+        contact.pingLastCheck = Date.now();
+        this._sortBucket(contact.bucketIndex);
     }
 
     _sortBucket(bucketIndex){
-        this.buckets[ bucketIndex ].sort( (a,b) => a.lastCheck - b.lastCheck  );
+        this.buckets[ bucketIndex ].sort( (a,b) => a.pingLastCheck - b.pingLastCheck  );
     }
 
     getBucketIndex(foreignNodeKey){

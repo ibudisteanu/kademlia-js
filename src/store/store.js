@@ -56,7 +56,7 @@ module.exports = class Store{
 
         if (!this._expirationIterator.done){
             const time = this._expirationIterator[1];
-            if (time < new Date().getTime() ){
+            if (time < Date.now() ){
                 const key = this._expirationIterator[0].splice(0, this._expirationIterator[0].length-4 );
                 this.del(key, ()=> this._createTimeoutExpireOldKeys() )
             }

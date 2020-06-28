@@ -42,8 +42,12 @@ module.exports = class KademliaRules {
      */
     store(srcContact, key, value, cb) {
 
-        if (typeof key === "string")  key = Buffer.from(key, 'hex');
-        Validation.validateLookup(key);
+        try{
+            if (typeof key === "string")  key = Buffer.from(key, 'hex');
+            Validation.validateLookup(key);
+        }catch(err){
+            return cb(err);
+        }
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
@@ -61,8 +65,12 @@ module.exports = class KademliaRules {
      */
     findNode( srcContact, key, cb ){
 
-        if (typeof key === "string")  key = Buffer.from(key, 'hex');
-        Validation.validateLookup(key);
+        try{
+            if (typeof key === "string")  key = Buffer.from(key, 'hex');
+            Validation.validateLookup(key);
+        }catch(err){
+            return cb(err);
+        }
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
@@ -80,8 +88,12 @@ module.exports = class KademliaRules {
      */
     findValue(srcContact, key, cb){
 
-        if (typeof key === "string")  key = Buffer.from(key, 'hex');
-        Validation.validateLookup(key);
+        try{
+            if (typeof key === "string")  key = Buffer.from(key, 'hex');
+            Validation.validateLookup(key);
+        }catch(err){
+            return cb(err);
+        }
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 

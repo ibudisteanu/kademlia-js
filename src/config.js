@@ -1,5 +1,7 @@
 module.exports = {
 
+    ALPHA_CONCURRENCY: 4,
+
     NODE_ID_LENGTH: 20, //20 bytes, 160 bits
     BUCKETS_COUNT: 160, //160 bits B
 

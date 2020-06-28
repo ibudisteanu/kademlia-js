@@ -28,7 +28,7 @@ module.exports = class StoreMemory extends Store{
         Validation.validateStoreData(value)
 
         this._memory.set( key, value );
-        this._putExpiration(key, new Date().getTime() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
+        this._putExpiration(key, Date.now() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
             cb( null, true );
         });
 
