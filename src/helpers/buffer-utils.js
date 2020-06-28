@@ -1,5 +1,19 @@
 const Validation = require('./validation')
 
+function getPowerOfTwoBufferForIndex(referenceKey, exp) {
+    if (exp < 0 || exp >= global.KAD_OPTIONS.BUCKETS_COUNT_B) throw 'Index out of range';
+
+    const buffer = Buffer.isBuffer(referenceKey)
+        ? Buffer.from(referenceKey)
+        : Buffer.from(referenceKey, 'hex');
+    const byteValue = parseInt(exp / 8);
+
+    // NB: We set the byte containing the bit to the right left shifted amount
+    buffer[ global.KAD_OPTIONS.BUCKET_COUNT_K - byteValue - 1] = 1 << (exp % 8);
+
+    return buffer;
+}
+
 module.exports = {
 
     /**
@@ -35,6 +49,26 @@ module.exports = {
         }
 
         return 0;
+    },
+
+    getRandomBufferInBucketRange (referenceKey, index) {
+        let base = getPowerOfTwoBufferForIndex(referenceKey, index);
+        let byte = parseInt(index / 8); // NB: Randomize bytes below the power of two
+
+        for (let i = global.KAD_OPTIONS.BUCKET_COUNT_K - 1; i > (global.KAD_OPTIONS.BUCKET_COUNT_K - byte - 1); i--)
+            base[i] = parseInt(Math.random() * 256);
+
+
+        // NB: Also randomize the bits below the number in that byte and remember
+        // NB: arrays are off by 1
+        for (let j = index - 1; j >= byte * 8; j--) {
+            let one = Math.random() >= 0.5;
+            let shiftAmount = j - byte * 8;
+
+            base[ global.KAD_OPTIONS.BUCKET_COUNT_K - byte - 1] |= one ? (1 << shiftAmount) : 0;
+        }
+
+        return base;
     },
 
 }

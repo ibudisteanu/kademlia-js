@@ -1,5 +1,6 @@
 const BufferUtils = require('./helpers/buffer-utils')
 const KBucket = require('./kbucket')
+const async = require('async')
 
 module.exports = class RoutingTable {
 
@@ -7,18 +8,20 @@ module.exports = class RoutingTable {
 
         this._kademliaNode = kademliaNode;
 
-        this.buckets = new Array(global.KAD_OPTIONS.BUCKETS_COUNT).fill( null );
+        this.buckets = new Array(global.KAD_OPTIONS.BUCKETS_COUNT_B).fill( null );
         this.buckets = this.buckets.map( (it, index) =>  new KBucket(index) );
         this.map = {};
+
+        this.bucketsLookups = {}; // Track the last lookup time for buckets
         this.count = 0;
     }
 
     start(){
-        this._refreshBuckets();
+        this._intervalRefresh = setInterval( this.refresh.bind(this, 0), global.KAD_OPTIONS.T_BUCKETS_REFRESH);
     }
 
     stop(){
-        clearTimeout(this._timeoutRefreshBucket);
+        clearInterval(this._intervalRefresh);
     }
 
     addContact(contact){
@@ -64,32 +67,6 @@ module.exports = class RoutingTable {
     }
 
 
-    _refreshBuckets(){
-
-        const bucketIndex = Math.floor( Math.random() * this.buckets.length );
-
-        if (this.buckets[bucketIndex].length > 0) {
-            const contactIndex = this.buckets[bucketIndex].length-1;
-            const contactItem = this.buckets[bucketIndex][contactIndex];
-
-            //check availability
-            this._kademliaNode.rules.sendPing(contactItem, (err, out)=>{
-
-                if (!err && out === true){
-                    contactItem.pingLastCheck = Date.now();
-                    contactItem.pingResponded = true;
-                    this._refreshContactItem(contactItem);
-                } else{
-                    //offline, let's remove it
-                    contactItem.pingResponded = false;
-                }
-
-            });
-        }
-
-        this._timeoutRefreshBucket = setTimeout( this._refreshBuckets.bind(this), global.KAD_OPTIONS.T_BUCKET_REFRESH );
-    }
-
     _refreshContactItem(contact){
         contact.pingLastCheck = Date.now();
         this._sortBucket(contact.bucketIndex);
@@ -102,7 +79,7 @@ module.exports = class RoutingTable {
     getBucketIndex(foreignNodeKey){
 
         const distance = BufferUtils.xorDistance(this._kademliaNode.contact.identity, foreignNodeKey );
-        let bucketIndex = global.KAD_OPTIONS.BUCKETS_COUNT;
+        let bucketIndex = global.KAD_OPTIONS.BUCKETS_COUNT_B;
 
         for (const byteValue of distance) {
             if (byteValue === 0) {
@@ -147,13 +124,38 @@ module.exports = class RoutingTable {
         while (contactResults.length < count && descIndex >= 0)
             _addNearestFromBucket(descIndex--);
 
-        while (contactResults.length < count && ascIndex < global.KAD_OPTIONS.BUCKETS_COUNT)
+        while (contactResults.length < count && ascIndex < global.KAD_OPTIONS.BUCKETS_COUNT_B)
             _addNearestFromBucket(ascIndex++);
 
-        //TODO verifiy if contactResults always returned sorted by distance...
-        //TODO: contactResults.sort( (a,b)=> BufferUtils.compareKeyBuffers(a.distance, b.distance) );
         return contactResults;
 
     }
+
+    /**
+     * If no node lookups have been performed in any given bucket's range for
+     * T_REFRESH, the node selects a random number in that range and does a
+     * refresh, an iterativeFindNode using that number as key.
+     * @param {number} startIndex
+     */
+    refresh(startIndex = 0, callback = () => null) {
+        const now = Date.now();
+
+        async.each(  this.buckets, (bucket, next) => {
+
+            const bucketHasContacts = bucket.length > 0;
+            const lastBucketLookup = this.bucketsLookups[bucket.bucketIndex] || 0;
+            const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
+
+            if (bucketHasContacts && needsRefresh) {
+                return this._kademliaNode.crawler.iterativeFindNode(
+                    BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
+                    next,
+                );
+            }else
+                next();
+
+        }, callback);
+    }
+
 
 }

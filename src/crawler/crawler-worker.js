@@ -45,7 +45,7 @@ module.exports = class CrawlerWorker {
                         }
 
                     this._countNow--;
-                    setTimeout(this.process.bind(this, key, cb), 10) //to avoid stack over flow
+                    this.process(key, cb);
 
                 }
                 else {
@@ -57,7 +57,7 @@ module.exports = class CrawlerWorker {
                             counter += 1;
                             if (counter === results.length ){
                                 this._countNow--;
-                                setTimeout(this.process.bind(this, key, cb), 10) //to avoid stack over flow
+                                this.process(key, cb);
                             }
                         } )
                     )

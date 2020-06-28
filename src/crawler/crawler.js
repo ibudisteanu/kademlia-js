@@ -8,7 +8,6 @@ module.exports = class Crawler {
 
     constructor(kademliaNode) {
         this._kademliaNode = kademliaNode;
-        this._lookups = new Map();
     }
 
     /**
@@ -55,7 +54,7 @@ module.exports = class Crawler {
         }
 
         const shortlist = [];
-        this._lookups.set( this._kademliaNode.routingTable.getBucketIndex( key ), Date.now() );
+        this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
 
         const crawlerWorker = new CrawlerWorker(this, this._kademliaNode, shortlist);
         crawlerWorker.process(key, cb )
