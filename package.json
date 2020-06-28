@@ -1,6 +1,6 @@
 {
   "name": "Simple Kademlia",
   "scripts": {
-    "start": "examples/start.js"
+    "start": "examples/simple-example.js"
   }
 }
