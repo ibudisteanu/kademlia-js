@@ -21,23 +21,23 @@ const nodes = contacts.map( contact => new KAD.implementations.KademliaNodeMock(
 nodes.map( it => it.start() );
 
 //encountering
-nodes[0].join( contacts[1] );
-nodes[0].join( contacts[2] );
-nodes[1].join( contacts[2] );
-nodes[2].join( contacts[3] );
-nodes[2].join( contacts[4] );
-nodes[4].join( contacts[5] );
+nodes[0].bootstrap( contacts[1] );
+nodes[0].bootstrap( contacts[2] );
+nodes[1].bootstrap( contacts[2] );
+nodes[2].bootstrap( contacts[3] );
+nodes[2].bootstrap( contacts[4] );
+nodes[4].bootstrap( contacts[5] );
 
 
 let query = KAD.helpers.StringUtils.genHexString(40);
-nodes[0].rules.receive(undefined, 'STORE', [query, 'value'], (out)=>{
+nodes[0].rules.receive(undefined, 'STORE', [query, 'value'], (err, out)=>{
     if (!out) throw "store returned something strange";
-    out = nodes[0].rules.receive(undefined, 'FIND_VALUE', [query], (out)=>{
+    out = nodes[0].rules.receive(undefined, 'FIND_VALUE', [query], (err, out)=>{
         if (out.out !== 'value' ) throw "findValue didn't return the right value"
     } )
 });
 
-nodes[0].rules.receive(undefined, 'FIND_VALUE', [KAD.helpers.StringUtils.genHexString(40)], out =>{
+nodes[0].rules.receive(undefined, 'FIND_VALUE', [KAD.helpers.StringUtils.genHexString(40)], (err, out) =>{
     if (out.list.length !== 2) throw 'fidnValue returned something';
 } );
 

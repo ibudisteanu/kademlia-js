@@ -26,7 +26,7 @@ module.exports = class KademliaRules {
     ping(srcContact, cb) {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
-        cb(true);
+        cb(null, true);
 
     }
 
@@ -51,7 +51,7 @@ module.exports = class KademliaRules {
     }
 
     sendStore(contact, key, value, cb){
-        this.send(contact,'SEND_STORE', [key, value], cb)
+        this.send(contact,'STORE', [key, value], cb)
     }
 
     /**
@@ -66,11 +66,11 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
-        cb( this._kademliaNode.routingTable.getClosestToKey(key) );
+        cb( null, this._kademliaNode.routingTable.getClosestToKey(key) );
     }
 
     sendFindNode(contact, key, cb){
-        this.send(contact, 'SEND_STORE', [key], cb);
+        this.send(contact, 'FIND_NODE', [key], cb);
     }
 
     /**
@@ -85,10 +85,10 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._kademliaNode.welcomeIfNewNode(srcContact);
 
-        this._store.get(key.toString('hex'), (out) => {
+        this._store.get(key.toString('hex'), (err, out) => {
             //found the data
-            if (out) cb({out: out})
-            else cb( {list: this._kademliaNode.routingTable.getClosestToKey(key) } )
+            if (out) cb(null, {out: out})
+            else cb( null, {list: this._kademliaNode.routingTable.getClosestToKey(key) } )
         })
 
     }

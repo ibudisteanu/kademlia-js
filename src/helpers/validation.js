@@ -20,3 +20,4 @@ module.exports.validateStoreKey = (key) => {
 module.exports.validateStoreData = (data) => {
     if (typeof data !== 'string' || data.length === 0) throw "data is invalid";
 }
+

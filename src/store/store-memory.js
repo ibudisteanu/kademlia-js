@@ -19,7 +19,7 @@ module.exports = class StoreMemory extends Store{
 
     get(key, cb){
         Validation.validateStoreKey(key);
-        cb( this._memory.get(key) );
+        cb( null, this._memory.get(key) );
     }
 
     put(key, value, cb){
@@ -29,7 +29,7 @@ module.exports = class StoreMemory extends Store{
 
         this._memory.set( key, value );
         this._putExpiration(key, new Date().getTime() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
-            cb( true );
+            cb( null, true );
         });
 
     }
@@ -42,29 +42,29 @@ module.exports = class StoreMemory extends Store{
             this._memory.delete(key);
             this._memory._delExpiration(key);
             this.delExpiration(key, ()=>{
-                cb(true)
+                cb(null, true)
             })
         } else
-            cb(false);
+            cb(null, false);
     }
 
 
     _getExpiration(key, cb){
-        cb( this._memoryExpiration.get(key+':exp') );
+        cb( null, this._memoryExpiration.get(key+':exp') );
     }
 
     _putExpiration(key, time, cb){
         this._memoryExpiration.set(key+':exp', time);
-        cb(true);
+        cb(null, true);
     }
 
     _delExpiration(key, cb){
 
         if (this._memory.get(key)) {
             this._memoryExpiration.delete(key + ':exp');
-            cb(true)
+            cb(null, true)
         } else
-            cb(false);
+            cb(null, false);
     }
 
 }

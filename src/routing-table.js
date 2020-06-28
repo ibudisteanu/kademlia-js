@@ -24,7 +24,7 @@ module.exports = class RoutingTable {
     addContact(contact){
 
         if (this.map[contact.identityHex]) {  //already have it
-            this._refreshContact(contact);
+            this._refreshContactItem(this.map[contact.identityHex]);
             return false;
         }
 
@@ -37,8 +37,7 @@ module.exports = class RoutingTable {
         this.buckets[bucketIndex].push({
             contact,
             bucketIndex,
-            availability: 1, //already available
-            latCheck: new Date().getTime(),
+            lastCheck: new Date().getTime(),
         });
         this.map[contact.identityHex] = contact;
         this.count += 1;
@@ -71,30 +70,33 @@ module.exports = class RoutingTable {
         const bucketIndex = Math.floor( Math.random() * this.buckets.length );
 
         if (this.buckets[bucketIndex].length > 0) {
-            const contactIndex = Math.floor(Math.random() * this.buckets[bucketIndex].length);
-            const contact = this.buckets[bucketIndex][contactIndex];
+            const contactIndex = this.buckets[bucketIndex].length-1;
+            const contactItem = this.buckets[bucketIndex][contactIndex];
 
             //check availability
-            let online = true;
-            if (online) { //online
-                this._refreshContact(contact);
-            } else { //offline, let's remove it
-                contact.availability = 0;
-                this.remove(contact);
-            }
+            this._kademliaNode.rules.sendPing(contactItem.contact, (err, out)=>{
+
+                if (!err && out === true){
+                    contactItem.lastCheck = new Date().getTime();
+                    this._refreshContactItem(contactItem);
+                } else{
+                    //offline, let's remove it
+                    this.removeContact(contactItem.contact);
+                }
+
+            });
         }
 
         this._timeoutRefreshBucket = setTimeout( this._refreshBuckets.bind(this), global.KAD_OPTIONS.T_BUCKET_REFRESH );
     }
 
-    _refreshContact(contact){
-        contact.availability += new Date().getTime() - contact.lastCheck;
-        contact.lastCheck = new Date().getTime();
-        this._sortBucket(contact.bucketIndex);
+    _refreshContactItem(contactItem){
+        contactItem.lastCheck = new Date().getTime();
+        this._sortBucket(contactItem.bucketIndex);
     }
 
     _sortBucket(bucketIndex){
-        this.buckets[ this.map[ bucketIndex ] ].sort( (a,b) => a-b  );
+        this.buckets[ bucketIndex ].sort( (a,b) => a.lastCheck - b.lastCheck  );
     }
 
     getBucketIndex(foreignNodeKey){

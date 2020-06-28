@@ -10,4 +10,12 @@ module.exports = class KademliaNodeMock extends KademliaNode {
         })
     }
 
+    bootstrap(contact, cb = ()=>{} ){
+        super.bootstrap(contact, cb );
+    }
+
+    join(contact, cb = ()=>{} ) {
+        super.join(contact, cb);
+    }
+
 }

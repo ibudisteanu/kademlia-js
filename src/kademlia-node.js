@@ -12,29 +12,30 @@ module.exports = class KademliaNode {
         this.routingTable = new RoutingTable(this);
         this.rules = new (options.KademliaRules || KademliaRules) (this, store);
 
+        this._started = false;
     }
 
     start() {
-        if (this._start) throw "Already started";
-        this._start = true;
+        if (this._started) throw "Already started";
+        this._started = true;
         this.routingTable.start();
         this.rules.start();
         this._store.start();
     }
 
     stop() {
-        if (!this._start) throw "Already stopped";
+        if (!this._started) throw "Already stopped";
         this.routingTable.stop();
         this.rules.stop();
         this._store.stop();
-        this._start = false;
+        this._started = false;
     }
 
     /**
      * Bootstrap by connecting to other known node in the network.
      */
     bootstrap(contact, cb){
-        if (this.routingTable.map[contact.identityHex]) return cb(true); //already
+        if (this.routingTable.map[ contact.identityHex ]) return cb(true); //already
 
         this.join(contact, cb)
     }
@@ -68,7 +69,7 @@ module.exports = class KademliaNode {
 
         if (!iterator ) {
             iterator = this._store.iterator();
-            this.join(contact)
+            this.routingTable.addContact(contact);
         }
 
         while (!iterator.done) {
@@ -81,16 +82,16 @@ module.exports = class KademliaNode {
 
             let newNodeClose, thisClosest;
             if (neighbors.length){
-                const last = BufferUtils.xorDistance( neighbors[neighbors.length-1].identity, keyNode );
+                const last = BufferUtils.xorDistance( neighbors[neighbors.length-1].contact.identity, keyNode );
                 newNodeClose = Buffer.compare( BufferUtils.xorDistance( contact.identity, keyNode), last );
-                const first = BufferUtils.xorDistance( neighbors[0].identity, keyNode );
+                const first = BufferUtils.xorDistance( neighbors[0].contact.identity, keyNode );
                 thisClosest = Buffer.compare( BufferUtils.xorDistance( this.contact.identity, keyNode ), first)
             }
 
             if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 ) ) {
                 this.rules.sendStore(contact, key, value, out => {
                     if (out) {
-                        iterator.next();
+                        iterator.next(  );
                         setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 1000)
                     }
                 });
