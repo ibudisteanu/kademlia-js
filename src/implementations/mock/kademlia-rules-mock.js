@@ -19,6 +19,7 @@ module.exports = class KademliaRulesMock extends KademliaRules {
 
     send(destContact, command, data, cb){
 
+        //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.ip+':'+destContact.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY )
             return cb( new Error("Message couldn't be sent")  );
 

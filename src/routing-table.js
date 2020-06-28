@@ -132,10 +132,10 @@ module.exports = class RoutingTable {
         const _addNearestFromBucket = bucket => {
 
             const entries = this.buckets[bucket].getBucketClosestToKey( key, count );
-            for (let i = 0; i < entries.length; i++)
-                if (contactResults.length === count ) break;
-                else if ( bannedMap && bannedMap[entries[i].contact.identityHex] )  continue;
-                else contactResults.push(entries[i]);
+
+            for (let i = 0; i < entries.length && contactResults.length < count; i++)
+                if ( !bannedMap || !bannedMap[entries[i].contact.identityHex] )
+                    contactResults.push(entries[i]);
 
         }
 

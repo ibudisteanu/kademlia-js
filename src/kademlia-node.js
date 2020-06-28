@@ -71,14 +71,15 @@ module.exports = class KademliaNode {
 
         if (!iterator ) {
             iterator = this._store.iterator();
-            iterator.next();
             this.routingTable.addContact(contact);
         }
 
-        while (!iterator.done && iterator.value) {
+        let itValue = iterator.next();
 
-            const key = iterator.value[0];
-            const value = iterator.value[1];
+        while (!itValue.done) {
+
+            const key = itValue.value[0];
+            const value = itValue.value[1];
 
             const keyNode = Buffer.from(key, 'hex');
             const neighbors = this.routingTable.getClosestToKey(contact.identity)
@@ -91,16 +92,16 @@ module.exports = class KademliaNode {
                 thisClosest = Buffer.compare( BufferUtils.xorDistance( this.contact.identity, keyNode ), first)
             }
 
-            if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 ) ) {
+            if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  ) {
                 this.rules.sendStore(contact, key, value, out => {
-                    if (out) {
-                        iterator.next(  );
+
+                    if (out)
                         setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 1000)
-                    }
+
                 });
                 return;
             } else
-                iterator.next();
+                itValue = iterator.next();
 
         }
 
