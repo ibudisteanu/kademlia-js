@@ -28,19 +28,23 @@ nodes[2].bootstrap( contacts[3] );
 nodes[2].bootstrap( contacts[4] );
 nodes[4].bootstrap( contacts[5] );
 
+setTimeout(()=>{
 
-let query = KAD.helpers.StringUtils.genHexString(40);
-nodes[0].rules.receive(undefined, 'STORE', [query, 'value'], (err, out)=>{
-    if (!out) throw "store returned something strange";
-    out = nodes[0].rules.receive(undefined, 'FIND_VALUE', [query], (err, out)=>{
-        if (out.out !== 'value' ) throw "findValue didn't return the right value"
-    } )
-});
+    let query = KAD.helpers.StringUtils.genHexString(40);
+    nodes[0].rules.receive(undefined, 'STORE', [query, 'value'], (err, out)=>{
+        if (!out) throw "store returned something strange";
+        out = nodes[0].rules.receive(undefined, 'FIND_VALUE', [query], (err, out)=>{
+            if (out.out !== 'value' ) throw "findValue didn't return the right value"
+        } )
+    });
 
-nodes[0].rules.receive(undefined, 'FIND_VALUE', [KAD.helpers.StringUtils.genHexString(40)], (err, out) =>{
-    if (out.list.length !== 2) throw 'fidnValue returned something';
-} );
+    nodes[0].rules.receive(undefined, 'FIND_VALUE', [KAD.helpers.StringUtils.genHexString(40)], (err, out) =>{
+        if (out.list.length !== 5) throw 'findValue returned something';
+    } );
 
-nodes[4].crawler.iterativeFindNode(query, (err, out)=>{
-    console.log(out);
-})
+    nodes[4].crawler.iterativeFindNode(query, (err, out)=>{
+        console.log(out);
+    })
+
+
+}, 1000);

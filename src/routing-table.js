@@ -124,13 +124,7 @@ module.exports = class RoutingTable {
 
 
 
-    getClosestToKey(key, count = global.KAD_OPTIONS.BUCKET_COUNT_K, initList){
-
-        let initMap;
-        if (initList){
-            initMap = {}
-            initList.forEach( it => initMap[it.contact.identityHex] = true );
-        }
+    getClosestToKey(key, count = global.KAD_OPTIONS.BUCKET_COUNT_K, bannedMap){
 
         const bucketIndex = this.getBucketIndex(key);
         const contactResults = [];
@@ -140,10 +134,8 @@ module.exports = class RoutingTable {
             const entries = this.buckets[bucket].getBucketClosestToKey( key, count );
             for (let i = 0; i < entries.length; i++)
                 if (contactResults.length === count ) break;
-                else {
-                    if (initMap && initMap[ entries[i].contact.identityHex ]) continue;
-                    contactResults.push(entries[i]);
-                }
+                else if ( bannedMap && bannedMap[entries[i].contact.identityHex] )  continue;
+                else contactResults.push(entries[i]);
 
         }
 
@@ -159,7 +151,7 @@ module.exports = class RoutingTable {
             _addNearestFromBucket(ascIndex++);
 
         //TODO verifiy if contactResults always returned sorted by distance...
-        if (initList) contactResults.sort( (a,b)=> BufferUtils.compareKeyBuffers(a.distance, b.distance) );
+        //TODO: contactResults.sort( (a,b)=> BufferUtils.compareKeyBuffers(a.distance, b.distance) );
         return contactResults;
 
     }

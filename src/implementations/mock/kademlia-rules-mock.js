@@ -22,7 +22,9 @@ module.exports = class KademliaRulesMock extends KademliaRules {
         if (!global.KAD_MOCKUP[destContact.ip+':'+destContact.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY )
             return cb( new Error("Message couldn't be sent")  );
 
-        global.KAD_MOCKUP[destContact.ip+':'+destContact.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
+        setTimeout(()=>{
+            global.KAD_MOCKUP[destContact.ip+':'+destContact.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
+        }, Math.floor( Math.random() * 100) + 10)
     }
 
 }
