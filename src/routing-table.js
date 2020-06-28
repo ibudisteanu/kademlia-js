@@ -157,5 +157,31 @@ module.exports = class RoutingTable {
         }, callback);
     }
 
+    /**
+     * Returns the [index, bucket] of the occupied bucket with the lowest index
+     * @returns {array}
+     */
+    getClosestBucket() {
+
+        for (let i=0; i < this.buckets.length-1; i++ )
+            if ( this.buckets[i].length !== 0)
+                return this.buckets[i];
+
+    }
+
+    /**
+     * Returns an array of all occupied buckets further than the closest
+     * @returns {array}
+     */
+    getBucketsBeyondClosest() {
+        const furtherBuckets = [];
+        const closestBucket = this.getClosestBucket();
+
+        for (let i = closestBucket.bucketIndex + 1; i < this.buckets.length; i++)
+            if (this.buckets[i].length !== 0)
+                furtherBuckets.push( this.buckets[i] );
+
+        return furtherBuckets;
+    }
 
 }

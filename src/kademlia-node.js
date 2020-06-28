@@ -51,7 +51,19 @@ module.exports = class KademliaNode {
     join(contact, cb) {
         this.routingTable.addContact(contact);
 
-        this.crawler.iterativeFindNode( this.contact.identity, cb );
+        this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
+
+            this.routingTable.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=>{
+
+                if (this.routingTable.count === 1){
+                    this.routingTable.removeContact( this.routingTable.map[contact.identityHex]);
+                    return cb(new Error("Failed to discover nodes"));
+                }
+                else cb(err, out);
+
+            })
+
+        } );
     }
 
     /**
