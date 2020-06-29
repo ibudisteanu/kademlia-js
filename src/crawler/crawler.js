@@ -66,7 +66,7 @@ module.exports = class Crawler {
         let stored = 0, self = this;
         function dispatchSendStore(contacts, done){
             async.parallelLimit(
-                contacts.map( node => done => self._kademliaNode.rules.sendStore( node.contact, key, value, (err, out)=>{
+                contacts.map( node => done => self._kademliaNode.rules.sendStore( node, key, value, (err, out)=>{
                     stored = err ? stored : stored + 1;
                     done(null, out);
                 }) )

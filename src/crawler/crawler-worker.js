@@ -11,7 +11,6 @@ module.exports = class CrawlerWorker {
         this.shortlist = shortlist;
         this._already = {};
         this._banned = {};
-        this._countNow = 0;
     }
 
     process(key, cb){
@@ -23,10 +22,10 @@ module.exports = class CrawlerWorker {
 
         for (let i=0; i < this.shortlist.length && alphaSelectedContacts.length < global.KAD_OPTIONS.ALPHA_CONCURRENCY; i++) {
 
-            if (this._already[this.shortlist[i].contact.identityHex]) continue;
+            if (this._already[this.shortlist[i].identityHex]) continue;
 
             const node = this.shortlist[i];
-            this._already[node.contact.identityHex] = { status: null, };
+            this._already[node.identityHex] = { status: null, };
             alphaSelectedContacts.push(node)
 
         }
@@ -37,12 +36,12 @@ module.exports = class CrawlerWorker {
 
         function dispatchFindNode(selected, done){
 
-            this._kademliaNode.rules.send(selected.contact, 'FIND_NODE', [key], (err, results) => {
+            this._kademliaNode.rules.send(selected, 'FIND_NODE', [key], (err, results) => {
 
                 if (err) {
 
-                    this._already[selected.contact.identityHex].status = false;
-                    this._banned[selected.contact.identityHex] = true;
+                    this._already[selected.identityHex].status = false;
+                    this._banned[selected.identityHex] = true;
 
                     for (let j = 0; j < this.shortlist.length; j++)
                         if (this.shortlist[j] === selected) {
@@ -51,9 +50,9 @@ module.exports = class CrawlerWorker {
                         }
                     done(null, results);
                 } else {
-                    this._already[selected.contact.identityHex].status = true;
+                    this._already[selected.identityHex].status = true;
 
-                    async.parallelLimit( results.map( closestNode => done2 => this._updateContactFound(closestNode.contact, done2) )
+                    async.parallelLimit( results.map( closestNode => done2 => this._updateContactFound.call(this, closestNode, done2) )
                     , global.KAD_OPTIONS.ALPHA_CONCURRENCY, (err, out ) =>{
                         done(null, results);
                     } )

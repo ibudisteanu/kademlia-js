@@ -99,8 +99,8 @@ module.exports = class KademliaRules {
 
         this._store.get(key.toString('hex'), (err, out) => {
             //found the data
-            if (out) cb(null, {out: out})
-            else cb( null, {list: this._kademliaNode.routingTable.getClosestToKey(key) } )
+            if (out) cb(null, out )
+            else cb( null, this._kademliaNode.routingTable.getClosestToKey(key) )
         })
 
     }

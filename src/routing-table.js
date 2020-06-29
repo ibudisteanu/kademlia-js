@@ -60,7 +60,7 @@ module.exports = class RoutingTable {
         const index = this.buckets[contact.bucketIndex].findContactByIdentity(contact.identity);
 
         if (index !== -1) {
-            this.buckets.splice(index, 1);
+            this.buckets[contact.bucketIndex].splice(index, 1);
             delete this.map[contact.identityHex];
             this.count -= 1;
         }
@@ -108,10 +108,10 @@ module.exports = class RoutingTable {
 
         const _addNearestFromBucket = bucket => {
 
-            const entries = this.buckets[bucket].getBucketClosestToKey( key, count );
+            const entries = this.buckets[bucket].getBucketClosestToKey( key, count  );
 
             for (let i = 0; i < entries.length && contactResults.length < count; i++)
-                if ( !bannedMap || !bannedMap[entries[i].contact.identityHex] )
+                if ( !bannedMap || !bannedMap[entries[i].identityHex] )
                     contactResults.push(entries[i]);
 
         }

@@ -100,9 +100,9 @@ module.exports = class KademliaNode {
 
             let newNodeClose, thisClosest;
             if (neighbors.length){
-                const last = BufferUtils.xorDistance( neighbors[neighbors.length-1].contact.identity, keyNode );
+                const last = BufferUtils.xorDistance( neighbors[neighbors.length-1].identity, keyNode );
                 newNodeClose = Buffer.compare( BufferUtils.xorDistance( contact.identity, keyNode), last );
-                const first = BufferUtils.xorDistance( neighbors[0].contact.identity, keyNode );
+                const first = BufferUtils.xorDistance( neighbors[0].identity, keyNode );
                 thisClosest = Buffer.compare( BufferUtils.xorDistance( this.contact.identity, keyNode ), first)
             }
 
