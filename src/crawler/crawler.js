@@ -78,6 +78,7 @@ module.exports = class Crawler {
             (contacts, next) => dispatchSendStore(contacts, next),
             (sendStoreOut, next) => self._kademliaNode._store.put(key, value, next )
         ], (err, out)=>{
+            if (stored === 0 ) return cb(new Error("Failed to store key"));
             cb(null, stored);
         })
 

@@ -26,9 +26,7 @@ module.exports = class CrawlerWorker {
             if (this._already[this.shortlist[i].contact.identityHex]) continue;
 
             const node = this.shortlist[i];
-            this._already[node.contact.identityHex] = {
-                status: null,
-            };
+            this._already[node.contact.identityHex] = { status: null, };
             alphaSelectedContacts.push(node)
 
         }
@@ -37,23 +35,23 @@ module.exports = class CrawlerWorker {
         if (alphaSelectedContacts.length === 0)
             return cb(null, this.shortlist);
 
-        function dispatchFindNode(node, done){
+        function dispatchFindNode(selected, done){
 
-            this._kademliaNode.rules.send(node.contact, 'FIND_NODE', [key], (err, results) => {
+            this._kademliaNode.rules.send(selected.contact, 'FIND_NODE', [key], (err, results) => {
 
                 if (err) {
 
-                    this._already[node.contact.identityHex].status = false;
-                    this._banned[node.contact.identityHex] = true;
+                    this._already[selected.contact.identityHex].status = false;
+                    this._banned[selected.contact.identityHex] = true;
 
                     for (let j = 0; j < this.shortlist.length; j++)
-                        if (this.shortlist[j] === node) {
+                        if (this.shortlist[j] === selected) {
                             this.shortlist.splice(j, 1);
                             break;
                         }
                     done(null, results);
                 } else {
-                    this._already[node.contact.identityHex].status = true;
+                    this._already[selected.contact.identityHex].status = true;
 
                     async.parallelLimit( results.map( closestNode => done2 => this._updateContactFound(closestNode.contact, done2) )
                     , global.KAD_OPTIONS.ALPHA_CONCURRENCY, (err, out ) =>{
@@ -65,7 +63,7 @@ module.exports = class CrawlerWorker {
             })
         }
 
-        async.parallel( alphaSelectedContacts.map( node => done => dispatchFindNode.call(this, node, done) ), (err, results)=>{
+        async.parallel( alphaSelectedContacts.map( selected => done => dispatchFindNode.call(this, selected, done) ), (err, results)=>{
             this.process(key, cb)
         })
 
