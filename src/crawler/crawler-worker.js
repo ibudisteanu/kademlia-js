@@ -1,70 +1,93 @@
 const BufferUtils = require('./../helpers/buffer-utils')
 const SortsUtils = require('./../helpers/sorts-utils')
 const async = require('async')
+const ContactList = require('./contact-list')
 
 module.exports = class CrawlerWorker {
 
-    constructor(crawler, kademliaNode, shortlist) {
+    constructor(crawler, kademliaNode) {
         this._crawler = crawler;
         this._kademliaNode = kademliaNode;
-
-        this.shortlist = shortlist;
-        this._already = {};
-        this._banned = {};
     }
 
-    process(key, cb){
+    iterativeFind(method, key, cb){
 
-        if (this.shortlist.length < global.KAD_OPTIONS.BUCKET_COUNT_K)
-            this.shortlist = this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.BUCKET_COUNT_K, this._banned);
+        this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
 
-        const alphaSelectedContacts = [];
+        const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.BUCKET_COUNT_K ) );
+        let closest = shortlist.closest;
 
-        for (let i=0; i < this.shortlist.length && alphaSelectedContacts.length < global.KAD_OPTIONS.ALPHA_CONCURRENCY; i++) {
+        let finished = false;
 
-            if (this._already[this.shortlist[i].identityHex]) continue;
+        function dispatchFindNode(contact, next){
 
-            const node = this.shortlist[i];
-            this._already[node.identityHex] = { status: null, };
-            alphaSelectedContacts.push(node)
+            if (finished) return next(null, null)
 
-        }
+            //mark this node as contacted so as to avoid repeats
+            shortlist.contacted(contact);
 
-        //nothing new to do
-        if (alphaSelectedContacts.length === 0)
-            return cb(null, this.shortlist);
+            this._kademliaNode.rules.send(contact, 'FIND_NODE', [key], (err, result) => {
 
-        function dispatchFindNode(selected, done){
+                if (finished || err) return next(null, null);
 
-            this._kademliaNode.rules.send(selected, 'FIND_NODE', [key], (err, results) => {
+                // mark this node as active to include it in any return values
+                shortlist.responded(contact);
 
-                if (err) {
-
-                    this._already[selected.identityHex].status = false;
-                    this._banned[selected.identityHex] = true;
-
-                    for (let j = 0; j < this.shortlist.length; j++)
-                        if (this.shortlist[j] === selected) {
-                            this.shortlist.splice(j, 1);
-                            break;
-                        }
-                    done(null, results);
+                //If the result is a contact/node list, just keep track of it
+                if ( Array.isArray(result) || method !== 'FIND_VALUE' ){
+                    const added = shortlist.add(result);
+                    //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
+                    added.forEach(contact => this._updateContactFound(contact, () => { } ));
+                    next(null, result);
                 } else {
-                    this._already[selected.identityHex].status = true;
 
-                    async.parallelLimit( results.map( closestNode => done2 => this._updateContactFound.call(this, closestNode, done2) )
-                    , global.KAD_OPTIONS.ALPHA_CONCURRENCY, (err, out ) =>{
-                        done(null, results);
-                    } )
+                    //If we did get an item back, get the closest node we contacted
+                    //who is missing the value and store a copy with them
+                    const closestMissingValue = shortlist.active[0];
 
+                    if (closestMissingValue)
+                        this._kademliaNode.rules.send(closestMissingValue, 'STORE', [key, result ], () => null );
+
+                    //  we found a value, so stop searching
+                    finished = true;
+                    cb(null, { result, contact });
+                    next(null, result);
                 }
 
             })
         }
 
-        async.parallel( alphaSelectedContacts.map( selected => done => dispatchFindNode.call(this, selected, done) ), (err, results)=>{
-            this.process(key, cb)
-        })
+        function iterativeLookup(selection, continueLookup = true) {
+
+            //nothing new to do
+            if ( !selection.length )
+                return cb(null, shortlist.active.slice(0, global.KAD_OPTIONS.BUCKET_COUNT_K) );
+
+            async.each( selection, dispatchFindNode.bind(this),
+                (err, results)=>{
+
+                    if (finished) return;
+
+                    // If we have reached at least K active nodes, or haven't found a
+                    // closer node, even on our finishing trip, return to the caller
+                    // the K closest active nodes.
+                    if (shortlist.active.length >= global.KAD_OPTIONS.BUCKET_COUNT_K || (closest === shortlist.closest && !continueLookup) )
+                        return cb(null, shortlist.active.slice(0, global.KAD_OPTIONS.BUCKET_COUNT_K));
+
+                    // NB: we haven't discovered a closer node, call k uncalled nodes and
+                    // NB: finish up
+                    if (closest === shortlist.closest)
+                        return iterativeLookup.call(this, shortlist.uncontacted.slice(0, global.KAD_OPTIONS.BUCKET_COUNT_K), false );
+
+                    closest = shortlist.closest;
+
+                    //continue the lookup with ALPHA close, uncontacted nodes
+                    iterativeLookup.call(this, shortlist.uncontacted.slice(0, global.KAD_OPTIONS.ALPHA_CONCURRENCY), true );
+                })
+
+        }
+
+        iterativeLookup.call(this, shortlist.uncontacted.slice(0, global.KAD_OPTIONS.ALPHA_CONCURRENCY), true);
 
     }
 

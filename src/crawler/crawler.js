@@ -53,12 +53,22 @@ module.exports = class Crawler {
             return cb(err);
         }
 
-        const shortlist = [];
-        this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
+        const crawlerWorker = new CrawlerWorker(this, this._kademliaNode);
+        crawlerWorker.iterativeFind('FIND_NODE', key, cb )
 
-        const crawlerWorker = new CrawlerWorker(this, this._kademliaNode, shortlist);
-        crawlerWorker.process(key, cb )
+    }
 
+    iterativeFindValue(key, cb){
+
+        try{
+            if (typeof key === "string") key = Buffer.from(key, "hex");
+            Validation.validateIdentity(key);
+        }catch(err){
+            return cb(err);
+        }
+
+        const crawlerWorker = new CrawlerWorker(this, this._kademliaNode);
+        crawlerWorker.iterativeFind('FIND_VALUE', key, cb )
     }
 
     iterativeStoreValue(key, value, cb){
@@ -81,10 +91,6 @@ module.exports = class Crawler {
             if (stored === 0 ) return cb(new Error("Failed to store key"));
             cb(null, stored);
         })
-
-    }
-
-    findValue(){
 
     }
 
