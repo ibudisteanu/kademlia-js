@@ -1,4 +1,3 @@
-const async = require('async')
 const RoutingTable = require('./routing-table')
 const BufferUtils = require('./helpers/buffer-utils')
 const KademliaRules = require('./kademlia-rules')
