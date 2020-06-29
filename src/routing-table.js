@@ -177,9 +177,10 @@ module.exports = class RoutingTable {
         const furtherBuckets = [];
         const closestBucket = this.getClosestBucket();
 
-        for (let i = closestBucket.bucketIndex + 1; i < this.buckets.length; i++)
-            if (this.buckets[i].length !== 0)
-                furtherBuckets.push( this.buckets[i] );
+        if (closestBucket)
+            for (let i = closestBucket.bucketIndex + 1; i < this.buckets.length; i++)
+                if (this.buckets[i].length !== 0)
+                    furtherBuckets.push( this.buckets[i] );
 
         return furtherBuckets;
     }

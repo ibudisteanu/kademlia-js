@@ -53,6 +53,8 @@ module.exports = class KademliaNode {
 
         this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
 
+            if (err) return cb(err, out);
+
             this.routingTable.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=>{
 
                 if (this.routingTable.count === 1){

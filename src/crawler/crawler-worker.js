@@ -1,5 +1,6 @@
 const BufferUtils = require('./../helpers/buffer-utils')
 const SortsUtils = require('./../helpers/sorts-utils')
+const async = require('async')
 
 module.exports = class CrawlerWorker {
 
@@ -15,25 +16,32 @@ module.exports = class CrawlerWorker {
 
     process(key, cb){
 
-        if (this.shortlist.length < global.KAD_OPTIONS.BUCKET_COUNT_K) {
+        if (this.shortlist.length < global.KAD_OPTIONS.BUCKET_COUNT_K)
             this.shortlist = this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.BUCKET_COUNT_K, this._banned);
-        }
 
-        for (let i=0; i < this.shortlist.length; i++){
+        const alphaSelectedContacts = [];
 
-            //all 'threads' had been assigned
-            if (this._countNow === global.KAD_OPTIONS.ALPHA_CONCURRENCY ) break;
+        for (let i=0; i < this.shortlist.length && alphaSelectedContacts.length < global.KAD_OPTIONS.ALPHA_CONCURRENCY; i++) {
+
+            if (this._already[this.shortlist[i].contact.identityHex]) continue;
+
             const node = this.shortlist[i];
-
-            if (this._already[node.contact.identityHex]) continue;
             this._already[node.contact.identityHex] = {
                 status: null,
             };
+            alphaSelectedContacts.push(node)
 
-            this._countNow++;
+        }
+
+        if (alphaSelectedContacts.length === 0){
+            return cb(null, this.shortlist);
+        }
+
+        async.each( alphaSelectedContacts, (node, done)=>{
+
             this._kademliaNode.rules.send( node.contact, 'FIND_NODE', [key], (err, results) => {
 
-                if (err || results.length === 0) {
+                if (err) {
 
                     this._already[node.contact.identityHex].status = false;
                     this._banned[node.contact.identityHex] = true;
@@ -44,43 +52,36 @@ module.exports = class CrawlerWorker {
                             break;
                         }
 
-                    this._countNow--;
-                    this.process(key, cb);
-
+                    done(err, results);
                 }
                 else {
                     this._already[node.contact.identityHex].status = true;
 
-                    let counter = 0;
-                    results.forEach( closestNode =>
-                        this._updateContactFound( closestNode.contact, ()=>{
-                            counter += 1;
-                            if (counter === results.length ){
-                                this._countNow--;
-                                this.process(key, cb);
-                            }
-                        } )
-                    )
+                    async.each( results, (closestNode, done2)=> this._updateContactFound( closestNode.contact, done2 ),
+                    (err, out)=>{
+                        done(err, results);
+                    } )
+
                 }
 
             })
 
-        }
-
-        if (this._countNow === 0)
-            cb(null, this.shortlist);
+        }, (err, results)=>{
+            this.process(key, cb)
+        })
 
     }
 
     _updateContactFound(contact, cb){
         this._updateContactFoundNow(contact, (err, tail )=>{
-            if (err){
+            if (err) return cb(err, null);
+
+            if (tail && typeof tail === "object"){
                 this._kademliaNode.routingTable.removeContact(tail);
                 this._kademliaNode.routingTable.addContact(contact);
-                cb(null, contact);
-            } else {
-                cb(new Error("bucket full"));
+                return cb(null, contact);
             }
+            cb(null, null);
 
         })
     }
@@ -88,19 +89,20 @@ module.exports = class CrawlerWorker {
     _updateContactFoundNow(contact, cb){
 
         if (contact.identity.equals( this._kademliaNode.contact.identity) )
-            return cb(null, false);
+            return cb(null, null);
 
         const [result, bucketIndex, bucketPosition, refreshed ] = this._kademliaNode.routingTable.addContact(contact);
-        if (result || refreshed || (!result && !refreshed)) return cb(null, true);
+        if (result || refreshed || (!result && !refreshed))
+            return cb(null, true);
 
         const tail = this._kademliaNode.routingTable.buckets[bucketIndex].tail;
         if (tail.pingResponded && tail.pingLastCheck > ( Date.now() - 600000 ) )
-            return cb(null,)
+            return cb( "bucket full",)
 
         this._kademliaNode.rules.sendPing(tail, (err, out)=>{
             tail.pingLastCheck = Date.now();
             tail.pingResponded = false;
-            cb(err, tail );
+            cb(null, tail );
         })
 
     }
