@@ -62,10 +62,25 @@ module.exports = class Crawler {
     }
 
     iterativeStoreValue(key, value, cb){
+
+        let stored = 0, self = this;
+        function dispatchSendStore(contacts, done){
+            async.parallelLimit(
+                contacts.map( node => done => self._kademliaNode.rules.sendStore( node.contact, key, value, (err, out)=>{
+                    stored = err ? stored : stored + 1;
+                    done(null, out);
+                }) )
+            ,global.KAD_OPTIONS.ALPHA_CONCURRENCY, done)
+        }
+
         async.waterfall([
-            (next) => this.iterativeFindNode(key, value),
-            (contacts, next) => this._kademliaNode.routes.sendStore()
-        ])
+            (next) => this.iterativeFindNode(key, next),
+            (contacts, next) => dispatchSendStore(contacts, next),
+            (sendStoreOut, next) => self._kademliaNode._store.put(key, value, next )
+        ], (err, out)=>{
+            cb(null, stored);
+        })
+
     }
 
     findValue(){

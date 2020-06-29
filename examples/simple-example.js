@@ -43,8 +43,13 @@ setTimeout(()=>{
     } );
 
     nodes[4].crawler.iterativeFindNode(query, (err, out)=>{
-        console.log(out);
+        console.log("iterativeFindNode", out);
     })
 
+
+    let query2 = KAD.helpers.StringUtils.genHexString(40);
+    nodes[3].crawler.iterativeStoreValue(query2, 'query2', (err, out)=>{
+        console.log("iterativeStoreValue", out);
+    })
 
 }, 1000);

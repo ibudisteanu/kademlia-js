@@ -35,7 +35,7 @@ module.exports = class KBucket extends Array {
     findContactByIdentity(identity){
 
         for (let i=0; i < this.length; i++)
-            if (this.contact.identity.equals(identity) )
+            if (this[i].identity.equals(identity) )
                 return i
 
         return -1;
