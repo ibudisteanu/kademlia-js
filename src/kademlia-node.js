@@ -1,4 +1,4 @@
-const RoutingTable = require('./routing-table')
+const RoutingTable = require('./routing-table/routing-table')
 const BufferUtils = require('./helpers/buffer-utils')
 const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
@@ -54,7 +54,7 @@ module.exports = class KademliaNode {
 
             if (err) return cb(err, out);
 
-            this.routingTable.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=>{
+            this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=>{
 
                 if (this.routingTable.count === 1){
                     this.routingTable.removeContact( this.routingTable.map[contact.identityHex]);
@@ -79,7 +79,7 @@ module.exports = class KademliaNode {
      */
     welcomeIfNewNode(contact, iterator){
 
-        if (this.routingTable.map[ contact.identityHex ])
+        if (this.routingTable.map[ contact.identityHex ] || contact.identity.equals( this.contact.identity ))
             return false;
 
         if (!iterator ) {
@@ -109,7 +109,7 @@ module.exports = class KademliaNode {
                 this.rules.sendStore(contact, key, value, out => {
 
                     if (out)
-                        setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 1000)
+                        setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 100)
 
                 });
                 return;

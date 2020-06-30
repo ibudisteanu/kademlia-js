@@ -3,7 +3,7 @@ const Store = require('./src/store/store')
 const StoreMemory = require('./src/store/store-memory')
 const Config = require('./src/config')
 const Contact = require('./src/contact/contact')
-const RoutingTable = require('./src/routing-table')
+const RoutingTable = require('./src/routing-table/routing-table')
 
 const KademliaNodeMock = require('./src/implementations/mock/kademlia-node-mock')
 

@@ -173,6 +173,7 @@ module.exports = class Crawler {
             (sendStoreOut, next) => self._kademliaNode._store.put(key, value, next )
         ], (err, out)=>{
             if (stored === 0 ) return cb(new Error("Failed to store key"));
+            this._kademliaNode.routingTable.refresher.publishedByMe[key] = true;
             cb(null, stored);
         })
 

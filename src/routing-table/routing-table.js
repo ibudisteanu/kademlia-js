@@ -1,6 +1,7 @@
-const BufferUtils = require('./helpers/buffer-utils')
+const BufferUtils = require('../helpers/buffer-utils')
 const KBucket = require('./kbucket')
 const async = require('async')
+const RoutingTableRefresher = require('./routing-table-refresher')
 
 module.exports = class RoutingTable {
 
@@ -12,16 +13,18 @@ module.exports = class RoutingTable {
         this.buckets = this.buckets.map( (it, index) =>  new KBucket(index) );
         this.map = {};
 
+        this.refresher = new RoutingTableRefresher(kademliaNode, this);
+
         this.bucketsLookups = {}; // Track the last lookup time for buckets
         this.count = 0;
     }
 
     start(){
-        this._intervalRefresh = setInterval( this.refresh.bind(this, 0), global.KAD_OPTIONS.T_BUCKETS_REFRESH);
+        this.refresher.start();
     }
 
     stop(){
-        clearInterval(this._intervalRefresh);
+        this.refresher.stop();
     }
 
     addContact(contact){
@@ -131,31 +134,7 @@ module.exports = class RoutingTable {
 
     }
 
-    /**
-     * If no node lookups have been performed in any given bucket's range for
-     * T_REFRESH, the node selects a random number in that range and does a
-     * refresh, an iterativeFindNode using that number as key.
-     * @param {number} startIndex
-     */
-    refresh(startIndex = 0, callback = () => null) {
-        const now = Date.now();
 
-        async.each(  this.buckets, (bucket, next) => {
-
-            const bucketHasContacts = bucket.length > 0;
-            const lastBucketLookup = this.bucketsLookups[bucket.bucketIndex] || 0;
-            const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
-
-            if (bucketHasContacts && needsRefresh) {
-                return this._kademliaNode.crawler.iterativeFindNode(
-                    BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
-                    next,
-                );
-            }else
-                next();
-
-        }, callback);
-    }
 
     /**
      * Returns the [index, bucket] of the occupied bucket with the lowest index

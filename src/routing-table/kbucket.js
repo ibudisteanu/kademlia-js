@@ -1,5 +1,5 @@
 const KBucket = require('./kbucket')
-const BufferUtils = require('./helpers/buffer-utils')
+const BufferUtils = require('../helpers/buffer-utils')
 
 module.exports = class KBucket extends Array {
 

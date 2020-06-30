@@ -7,20 +7,18 @@ module.exports = class Store{
     start(){
         if (this._start) throw "Store already started";
 
-        this._started = true;
-        if (!this._timeoutExpireOldKeys) {
-            this._expirationIterator = undefined;
-            this._createTimeoutExpireOldKeys();
-        }
+        if (!this._intervalExpireOldKeys)
+            this._createIntervalExpireOldKeys();
 
+        this._started = true;
     }
 
     stop(){
         if (!this._start) throw "Stor already closed";
 
-        if (this._timeoutExpireOldKeys) {
-            clearTimeout(this._timeoutExpireOldKeys)
-            this._timeoutExpireOldKeys = undefined;
+        if (this._intervalExpireOldKeys) {
+            clearTimeout(this._intervalExpireOldKeys)
+            this._intervalExpireOldKeys = undefined;
         }
         this._started = false;
     }
@@ -59,17 +57,17 @@ module.exports = class Store{
             const time = itValue.value[1];
             if (time < Date.now() ){
                 const key = itValue.value[0].splice(0, this._expirationIterator[0].length-4 );
-                this.del(key, this._createTimeoutExpireOldKeys.bind(this) )
+                this.del(key, this._expireOldKeys.bind(this) )
             }
         } else {
-            delete this._expirationIterator;
-            this._createTimeoutExpireOldKeys();
+            this._createIntervalExpireOldKeys();
         }
 
     }
 
-    _createTimeoutExpireOldKeys(){
-        this._timeoutExpireOldKeys = setTimeout(this._expireOldKeys.bind(this), global.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR);
+    _createIntervalExpireOldKeys(){
+        this._expirationIterator = this._iteratorExpiration();
+        this._intervalExpireOldKeys = setTimeout(this._expireOldKeys.bind(this), global.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR);
     }
 
 }
