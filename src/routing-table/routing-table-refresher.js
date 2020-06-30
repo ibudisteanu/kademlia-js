@@ -79,10 +79,10 @@ module.exports = class RoutingTableRefresher {
 
         const now = Date.now();
         if ( !this._iteratorReplicate  )
-            this._iteratorReplicate = this._store.iterator();
+            this._iteratorReplicate = this._kademliaNode._store.iterator();
 
         let itValue = this._iteratorReplicate.next();
-        while (!itValue.done){
+        while (itValue.value && !itValue.done){
 
             const key = itValue.value[0];
             const value = itValue.value[1];
@@ -102,7 +102,7 @@ module.exports = class RoutingTableRefresher {
 
         }
 
-        if (!itValue.done) {
+        if (!itValue.value || !itValue.done) {
             cb(null, true);
             this._createIntervalReplicate();
         }

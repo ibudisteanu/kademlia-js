@@ -53,7 +53,7 @@ module.exports = class Store{
             this._expirationIterator = this._iteratorExpiration();
 
         const itValue =  this._expirationIterator.next();
-        if (!itValue.done){
+        if (itValue.value && !itValue.done){
             const time = itValue.value[1];
             if (time < Date.now() ){
                 const key = itValue.value[0].splice(0, this._expirationIterator[0].length-4 );

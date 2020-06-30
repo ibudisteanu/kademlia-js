@@ -77,7 +77,7 @@ module.exports = class Crawler {
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
 
-        const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.BUCKET_COUNT_K ) );
+        const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.ALPHA_CONCURRENCY ) );
         let closest = shortlist.closest;
 
         let finished = false;
@@ -100,7 +100,7 @@ module.exports = class Crawler {
                 if ( Array.isArray(result) || method !== 'FIND_VALUE' ){
                     const added = shortlist.add(result);
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
-                    added.forEach(contact => this._updateContactFound(contact, () => { } ));
+                    added.forEach(contact => this._updateContactFound(contact, () => null ));
                     next(null, result);
                 } else {
 
@@ -206,12 +206,16 @@ module.exports = class Crawler {
 
         const tail = this._kademliaNode.routingTable.buckets[bucketIndex].tail;
         if (tail.pingResponded && tail.pingLastCheck > ( Date.now() - 600000 ) )
-            return cb( "bucket full",)
+            return cb( new Error("bucket full"),)
 
         this._kademliaNode.rules.sendPing(tail, (err, out)=>{
             tail.pingLastCheck = Date.now();
-            tail.pingResponded = false;
-            cb(null, tail );
+            if (out){
+                tail.pingResponded = true;
+                cb(null, tail );
+            }else {
+                cb( new Error('ping failed'))
+            }
         })
 
     }

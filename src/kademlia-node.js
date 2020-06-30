@@ -36,7 +36,7 @@ module.exports = class KademliaNode {
      * Bootstrap by connecting to other known node in the network.
      */
     bootstrap(contact, cb){
-        if (this.routingTable.map[ contact.identityHex ]) return cb(true); //already
+        if (this.routingTable.map[ contact.identityHex ]) return cb(null, false); //already
 
         this.join(contact, cb)
     }
@@ -52,6 +52,7 @@ module.exports = class KademliaNode {
 
         this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
 
+            console.log("1111")
             if (err) return cb(err, out);
 
             this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=>{
@@ -89,7 +90,7 @@ module.exports = class KademliaNode {
 
         let itValue = iterator.next();
 
-        while (!itValue.done) {
+        while (itValue.value && !itValue.done) {
 
             const key = itValue.value[0];
             const value = itValue.value[1];
