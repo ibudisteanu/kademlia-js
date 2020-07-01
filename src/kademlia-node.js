@@ -2,6 +2,7 @@ const RoutingTable = require('./routing-table/routing-table')
 const BufferUtils = require('./helpers/buffer-utils')
 const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
+const NextTick = require('./helpers/next-tick')
 
 module.exports = class KademliaNode {
 
@@ -71,26 +72,31 @@ module.exports = class KademliaNode {
 
     /**
      *  Given a new node, send it all the keys/values it should be storing,
-         then add it to the routing table.
-         @param contact: A new node that just joined (or that we just found out about).
-         Process:
-         For each key in storage, get k closest nodes.  If newnode is closer
-         than the furtherst in that list, and the node for this server
-         is closer than the closest in that list, then store the key/value
-         on the new node (per section 2.5 of the paper)
+     *  then add it to the routing table.
+     *  @param contact: A new node that just joined (or that we just found out about).
+     *  Process:
      */
-    welcomeIfNewNode(contact){
+    welcomeIfNewNode(contact, cb = ()=>{} ){
 
         if (this.routingTable.map[ contact.identityHex ] || contact.identity.equals( this.contact.identity ))
             return false;
 
         this.routingTable.addContact(contact);
 
-        this._replicateStoreToNewNode(contact)
+        this._replicateStoreToNewNode(contact, undefined, cb )
 
     }
 
-    _replicateStoreToNewNode(contact, iterator){
+    /**
+     * For each key in storage, get k closest nodes.  If newnode is closer
+     * than the furtherst in that list, and the node for this server
+     * is closer than the closest in that list, then store the key/value
+     * on the new node (per section 2.5 of the paper)
+     * @param contact
+     * @param iterator
+     * @private
+     */
+    _replicateStoreToNewNode(contact, iterator, cb){
 
         if (!iterator ) {  //first time
             iterator = this._store.iterator();
@@ -115,16 +121,21 @@ module.exports = class KademliaNode {
             }
 
             if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  )
-                return this.rules.sendStore(contact, key, value, out => {
+                return this.rules.sendStore(contact, key, value, (err, out) => {
 
-                    if (out)
-                        setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 100)
+                    if (err)
+                        return cb(err); //error
+
+                    NextTick( this._replicateStoreToNewNode.bind(this, contact, iterator, cb), 25 )
 
                 });
             else
                 itValue = iterator.next();
 
         }
+
+        if (!itValue.value || !itValue.done)
+            cb(null, "done");
 
     }
 

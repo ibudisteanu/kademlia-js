@@ -1,5 +1,6 @@
 const BufferUtils = require('../helpers/buffer-utils')
 const async = require('async')
+const NextTick = require('./../helpers/next-tick')
 
 module.exports = class RoutingTableRefresher {
 
@@ -20,11 +21,11 @@ module.exports = class RoutingTableRefresher {
     }
 
     start(){
-        this._createIntervalRefresh();
-        this._createIntervalReplicate();
+        this._createTimeoutRefresh();
+        this._createTimeoutReplicate();
     }
 
-    _createIntervalRefresh(){
+    _createTimeoutRefresh(){
         if (this._timeoutRefresh) clearTimeout(this._timeoutRefresh)
         this._timeoutRefresh = setTimeout(
             () => this.refresh(0),
@@ -32,7 +33,7 @@ module.exports = class RoutingTableRefresher {
         );
     }
 
-    _createIntervalReplicate(){
+    _createTimeoutReplicate(){
         if (this._timeoutReplicate) clearTimeout(this._timeoutReplicate);
         delete this._iteratorReplicate; 
         this._timeoutReplicate = setTimeout(
@@ -102,7 +103,7 @@ module.exports = class RoutingTableRefresher {
                 next();
 
         }, (err, out ) => {
-            this._createIntervalRefresh();
+            this._createTimeoutRefresh();
             callback(err, out);
         });
     }
@@ -126,18 +127,16 @@ module.exports = class RoutingTableRefresher {
             const shouldRepublish = isPublisher && republishDue;
             const shouldReplicate = !isPublisher && replicateDue;
 
-            if (shouldReplicate || shouldRepublish) {
-                this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => {
-                    setTimeout(this._replicate.bind(this, cb), 1);
+            if (shouldReplicate || shouldRepublish) 
+                return this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => {
+                    NextTick(this._replicate.bind(this, cb), 1);
                 });
-                return;
-            }
 
         }
 
         if (!itValue.value || !itValue.done) {
             cb(null, true);
-            this._createIntervalReplicate();
+            this._createTimeoutReplicate();
         }
 
     }

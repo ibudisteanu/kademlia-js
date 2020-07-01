@@ -1,4 +1,5 @@
 const KAD = require('./../index');
+const async = require('async');
 
 KAD.init({});
 const store = new KAD.StoreMemory();
@@ -21,15 +22,10 @@ const nodes = contacts.map( contact => new KAD.implementations.KademliaNodeMock(
 nodes.map( it => it.start() );
 
 //encountering
-nodes[0].bootstrap( contacts[1], true );
-nodes[0].bootstrap( contacts[2], true );
-nodes[1].bootstrap( contacts[2], false );
-nodes[1].bootstrap( contacts[4], false );
-nodes[2].bootstrap( contacts[3], false );
-nodes[2].bootstrap( contacts[4], false );
-nodes[4].bootstrap( contacts[5], false );
-
-setTimeout(()=>{
+const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
+async.each( connections, ( connection, next) =>{
+    nodes[connection[0]].bootstrap( contacts[ connection[1] ], false, next );
+}, (err, out)=> {
 
     let query = KAD.helpers.StringUtils.genHexString(40);
     nodes[0].rules.receive(undefined, 'STORE', [query, 'value'], (err, out)=>{
@@ -53,4 +49,4 @@ setTimeout(()=>{
         console.log("iterativeStoreValue", out);
     })
 
-}, 1000);
+});
