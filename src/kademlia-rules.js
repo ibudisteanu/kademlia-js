@@ -193,6 +193,10 @@ module.exports = class KademliaRules {
 
     }
 
+    /**
+     * Clear expired _replicatedStoreToNewNodesAlready
+     * @private
+     */
     _replicatedStoreToNewNodeExpire(){
         
         const expiration = new Date() - global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY;
@@ -202,6 +206,10 @@ module.exports = class KademliaRules {
 
     }
 
+    /**
+     * USED to avoid memory leaks, from time to time, we have to clean this._replicatedStoreToNewNodesAlready
+     * @private
+     */
     _createTimeoutReplicateStoreToNewNodeExpire(){
         if (this._timeoutReplicatedStoreToNewNodeExpire) clearTimeout(this._timeoutReplicatedStoreToNewNodeExpire)
         this._timeoutReplicatedStoreToNewNodeExpire = setTimeout(
