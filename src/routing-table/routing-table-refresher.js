@@ -28,7 +28,7 @@ module.exports = class RoutingTableRefresher {
     _createTimeoutRefresh(){
         if (this._timeoutRefresh) clearTimeout(this._timeoutRefresh)
         this._timeoutRefresh = setTimeout(
-            () => this.refresh(0),
+            () => this.refresh(0, () => {} ),
             global.KAD_OPTIONS.T_BUCKETS_REFRESH + this._preventConvoy(),
         );
     }
@@ -54,7 +54,7 @@ module.exports = class RoutingTableRefresher {
      * refresh, an iterativeFindNode using that number as key.
      * @param {number} startIndex
      */
-    refresh(startIndex = 0, callback = () => null) {
+    refresh(startIndex = 0, callback) {
         const now = Date.now();
 
         /**
@@ -79,7 +79,7 @@ module.exports = class RoutingTableRefresher {
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
             const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
 
-            if (bucket.length > 0 && needsRefresh) {
+            if (bucket.length > 0 && needsRefresh)
                 return this._kademliaNode.crawler.iterativeFindNode(
                     BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
                     (err, contacts )=>{
@@ -99,8 +99,8 @@ module.exports = class RoutingTableRefresher {
                         next();
                     },
                 );
-            }else
-                next();
+
+            next();
 
         }, (err, out ) => {
             this._createTimeoutRefresh();

@@ -30,7 +30,7 @@ nodes.map( it => it.start() );
 const nodesList = [];
 
 
-let i=1, visited = {}, bootstrappedCount = 0;
+let i=3, visited = {0: true, 1: true, 2: true}, bootstrappedCount = 0;
 while (i < contacts.length) {
 
     let index = Math.floor(Math.random() * contacts.length);
@@ -44,22 +44,29 @@ while (i < contacts.length) {
 
 }
 
+const outBootstrap = [], outFiles = [];
 nodes[0].bootstrap(contacts[1], true, ()=>{
 
     nodes[0].bootstrap(contacts[2], true, ()=>{
 
         async.each( nodesList, (node, next) =>{
-            node.bootstrap( contacts[0], false, next );
+            node.bootstrap( contacts[0], false, (err, out) => {
+                next(null, out)
+                outBootstrap.push(out);
+            } );
         }, (err, out)=>{
 
-            console.log("bootstrap finished ", err, out);
+            console.log("bootstrap finished ", outBootstrap.length );
 
             async.each(files, (file, next)=>{
                 const nodeIndex = Math.floor( Math.random() * contacts.length );
-                nodes[nodeIndex].crawler.iterativeStoreValue( file.key, file.value, (err, out) => next() )
+                nodes[nodeIndex].crawler.iterativeStoreValue( file.key, file.value, (err, out) => {
+                    outFiles.push(out);
+                    next(null, out)
+                } )
             }, (err, out)=>{
 
-                console.log("files stored", out)
+                console.log("files stored", outFiles )
 
             })
 

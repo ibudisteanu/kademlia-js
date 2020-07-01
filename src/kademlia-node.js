@@ -37,7 +37,7 @@ module.exports = class KademliaNode {
      * Bootstrap by connecting to other known node in the network.
      */
     bootstrap(contact, first, cb){
-        if (this.routingTable.map[ contact.identityHex ]) return cb(null, false); //already
+        if (this.routingTable.map[ contact.identityHex ]) return cb(null, [] ); //already
 
         this.join(contact, first, cb)
     }
@@ -55,7 +55,7 @@ module.exports = class KademliaNode {
 
             if (err) return cb(err, out);
 
-            this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=> {
+            this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, ()=> {
 
                 if (!first && this.routingTable.count === 1){
                     this.routingTable.removeContact( contact );
