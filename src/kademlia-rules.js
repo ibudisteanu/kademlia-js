@@ -204,6 +204,7 @@ module.exports = class KademliaRules {
             if (this._replicatedStoreToNewNodesAlready[identityHex] < expiration )
                 delete this._replicatedStoreToNewNodesAlready[identityHex];
 
+        this._createTimeoutReplicateStoreToNewNodeExpire();
     }
 
     /**
