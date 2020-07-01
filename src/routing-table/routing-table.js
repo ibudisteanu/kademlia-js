@@ -42,10 +42,12 @@ module.exports = class RoutingTable {
         if (this.buckets[bucketIndex].length === global.KAD_OPTIONS.BUCKET_COUNT_K)
             return [false, bucketIndex, -1, false]; //I have already too many in the bucket
 
-        const newContact = contact.clone();
-        newContact.bucketIndex = bucketIndex;
-        newContact.pingLastCheck = Date.now();
-        newContact.pingResponded = null;
+        const newContact = {
+            contact,
+            bucketIndex: bucketIndex,
+            pingLastCheck: Date.now(),
+            pingResponded: null,
+        }
         this.buckets[bucketIndex].push( newContact );
         this.map[contact.identityHex] = newContact;
         this.count += 1;
@@ -56,15 +58,15 @@ module.exports = class RoutingTable {
 
     removeContact(contact){
 
-        if (typeof contact.bucketIndex !== 'number') throw "bucketIndex is not assigned";
-        const bucketIndex = contact.bucketIndex;
+        const item = this.map[contact.identityHex];
+        if (!item) return;
 
         //new search, because the position could have been changed
-        const index = this.buckets[contact.bucketIndex].findContactByIdentity(contact.identity);
+        const index = this.buckets[item.bucketIndex].findContactByIdentity(item.contact.identity);
 
         if (index !== -1) {
-            this.buckets[contact.bucketIndex].splice(index, 1);
-            delete this.map[contact.identityHex];
+            this.buckets[item.bucketIndex].splice(index, 1);
+            delete this.map[item.contact.identityHex];
             this.count -= 1;
         }
     }
@@ -91,11 +93,10 @@ module.exports = class RoutingTable {
             }
 
             for (let i = 0; i < 8; i++) {
-                if (byteValue & (0x80 >> i)) {
+                if (byteValue & (0x80 >> i))
                     return --bucketIndex;
-                } else {
+                else
                     bucketIndex--;
-                }
             }
         }
 
@@ -110,6 +111,8 @@ module.exports = class RoutingTable {
         const contactResults = [];
 
         const _addNearestFromBucket = bucket => {
+
+            if (!this.buckets[bucket].length) return; //optimization, some buckets might be empty
 
             const entries = this.buckets[bucket].getBucketClosestToKey( key, count  );
 

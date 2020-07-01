@@ -1,4 +1,5 @@
 const KAD = require('./../index');
+const async = require('async');
 
 KAD.init({});
 const store = new KAD.StoreMemory();
@@ -26,40 +27,44 @@ for (let i=0; i < dataCount; i++)
 const nodes = contacts.map( contact => new KAD.implementations.KademliaNodeMock(contact, store) )
 nodes.map( it => it.start() );
 
-nodes[0].bootstrap( contacts[1] );
-nodes[0].bootstrap( contacts[2] );
+const nodesList = [];
+
 
 let i=1, visited = {}, bootstrappedCount = 0;
-while (i < contacts.length){
+while (i < contacts.length) {
 
-    let index = Math.floor( Math.random() * contacts.length );
-    while ( visited[index] )
-        index = Math.floor( Math.random() * contacts.length );
+    let index = Math.floor(Math.random() * contacts.length);
+    while (visited[index])
+        index = Math.floor(Math.random() * contacts.length);
 
     i++;
 
     visited[index] = true;
-    nodes[index].bootstrap( contacts[0], ()=>{
+    nodesList.push( nodes[index] );
 
-        bootstrappedCount+=1;
-        console.log(bootstrappedCount);
-        if (bootstrappedCount === contacts.length-1){
-            console.log("bootstrap finished ");
-
-
-            let filesStored = 0;
-            for (let i=0; i < files.length; i++){
-                const nodeIndex = Math.floor( Math.random() * contacts.length );
-                nodes[nodeIndex].crawler.iterativeStoreValue( files[i].key, files[i].value, (cb, out)=>{
-                    filesStored +=1;
-                    if (filesStored === files.length-1){
-                        console.log("all files stored", out)
-                    }
-
-                } )
-            }
-
-        }
-    } );
 }
 
+nodes[0].bootstrap(contacts[1], true, ()=>{
+
+    nodes[0].bootstrap(contacts[2], true, ()=>{
+
+        async.each( nodesList, (node, next) =>{
+            node.bootstrap( contacts[0], (err, out) => next() );
+        }, ()=>{
+
+            console.log("bootstrap finished ");
+
+            async.each(files, (file, next)=>{
+                const nodeIndex = Math.floor( Math.random() * contacts.length );
+                nodes[nodeIndex].crawler.iterativeStoreValue( file.key, file.value, (err, out) => next() )
+            }, (err, out)=>{
+
+                console.log("files stored", out)
+
+            })
+
+        } );
+
+
+    })
+})

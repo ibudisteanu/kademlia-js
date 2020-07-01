@@ -1,5 +1,5 @@
-module.exports.validateIp = (ip) => {
-    if (typeof ip !== "string" || ip.length < 5) throw "invalid IP";
+module.exports.validateHostname = (hostname) => {
+    if (typeof hostname !== "string" || hostname.length < 5) throw "invalid Hostname";
 }
 
 module.exports.validatePort = (port) => {

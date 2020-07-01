@@ -21,8 +21,8 @@ module.exports = class KBucket extends Array {
         const contacts = [], distances = {};
 
         for (let i=0; i < this.length; i++ ){
-            contacts.push( this[i] )
-            distances[this[i].identityHex] = BufferUtils.xorDistance(this[i].identity, key );
+            contacts.push( this[i].contact )
+            distances[this[i].contact.identityHex] = BufferUtils.xorDistance(this[i].contact.identity, key );
         }
 
         return contacts.sort((a,b)=> BufferUtils.compareKeyBuffers( distances[a.identityHex], distances[b.identityHex]) )
@@ -34,7 +34,7 @@ module.exports = class KBucket extends Array {
     findContactByIdentity(identity){
 
         for (let i=0; i < this.length; i++)
-            if (this[i].identity.equals(identity) )
+            if (this[i].contact.identity.equals(identity) )
                 return i
 
         return -1;

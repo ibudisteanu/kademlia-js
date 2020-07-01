@@ -35,10 +35,10 @@ module.exports = class KademliaNode {
     /**
      * Bootstrap by connecting to other known node in the network.
      */
-    bootstrap(contact, cb){
+    bootstrap(contact, first, cb){
         if (this.routingTable.map[ contact.identityHex ]) return cb(null, false); //already
 
-        this.join(contact, cb)
+        this.join(contact, first, cb)
     }
 
     /**
@@ -47,21 +47,22 @@ module.exports = class KademliaNode {
      * then refreshes all buckets further than it's closest neighbor, which will
      * be in the occupied bucket with the lowest index
      */
-    join(contact, cb) {
+    join(contact, first = false, cb) {
         this.routingTable.addContact(contact);
 
         this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
 
-            console.log("1111")
             if (err) return cb(err, out);
 
-            this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=>{
+            this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, (err, out)=> {
 
-                if (this.routingTable.count === 1){
-                    this.routingTable.removeContact( this.routingTable.map[contact.identityHex]);
+                if (!first && this.routingTable.count === 1){
+                    this.routingTable.removeContact( contact );
                     return cb(new Error("Failed to discover nodes"));
                 }
-                else cb(err, out);
+                else{
+                    cb(err, out);
+                }
 
             })
 
@@ -78,14 +79,21 @@ module.exports = class KademliaNode {
          is closer than the closest in that list, then store the key/value
          on the new node (per section 2.5 of the paper)
      */
-    welcomeIfNewNode(contact, iterator){
+    welcomeIfNewNode(contact){
 
         if (this.routingTable.map[ contact.identityHex ] || contact.identity.equals( this.contact.identity ))
             return false;
 
-        if (!iterator ) {
+        this.routingTable.addContact(contact);
+
+        this._replicateStoreToNewNode(contact)
+
+    }
+
+    _replicateStoreToNewNode(contact, iterator){
+
+        if (!iterator ) {  //first time
             iterator = this._store.iterator();
-            this.routingTable.addContact(contact);
         }
 
         let itValue = iterator.next();
@@ -106,15 +114,14 @@ module.exports = class KademliaNode {
                 thisClosest = Buffer.compare( BufferUtils.xorDistance( this.contact.identity, keyNode ), first)
             }
 
-            if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  ) {
-                this.rules.sendStore(contact, key, value, out => {
+            if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  )
+                return this.rules.sendStore(contact, key, value, out => {
 
                     if (out)
                         setTimeout(this.welcomeIfNewNode.bind(this, contact, iterator), 100)
 
                 });
-                return;
-            } else
+            else
                 itValue = iterator.next();
 
         }

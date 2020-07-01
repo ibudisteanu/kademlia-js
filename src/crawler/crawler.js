@@ -186,7 +186,7 @@ module.exports = class Crawler {
             if (err) return cb(err, null);
 
             if (tail && typeof tail === "object"){
-                this._kademliaNode.routingTable.removeContact(tail);
+                this._kademliaNode.routingTable.removeContact(tail.contact);
                 this._kademliaNode.routingTable.addContact(contact);
                 return cb(null, contact);
             }
@@ -208,7 +208,7 @@ module.exports = class Crawler {
         if (tail.pingResponded && tail.pingLastCheck > ( Date.now() - 600000 ) )
             return cb( new Error("bucket full"),)
 
-        this._kademliaNode.rules.sendPing(tail, (err, out)=>{
+        this._kademliaNode.rules.sendPing(tail.contact, (err, out)=>{
             tail.pingLastCheck = Date.now();
             if (out){
                 tail.pingResponded = true;

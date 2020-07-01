@@ -10,7 +10,7 @@ module.exports = class KademliaRulesMock extends KademliaRules {
 
     start() {
         if (!global.KAD_MOCKUP) global.KAD_MOCKUP = {};
-        global.KAD_MOCKUP[this._kademliaNode.contact.ip+':'+this._kademliaNode.contact.port] = this;
+        global.KAD_MOCKUP[this._kademliaNode.contact.hostname+':'+this._kademliaNode.contact.port] = this;
     }
 
     stop(){
@@ -20,13 +20,13 @@ module.exports = class KademliaRulesMock extends KademliaRules {
     send(destContact, command, data, cb){
 
         //fake some unreachbility
-        if (!global.KAD_MOCKUP[destContact.ip+':'+destContact.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
+        if (!global.KAD_MOCKUP[destContact.hostname+':'+destContact.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
             console.error("LOG: Message couldn't be sent", command, destContact);
-            return cb(new Error("Message couldn't be sent"));
+            return cb(new Error("Message couldn't be sent"), null);
         }
 
         setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.ip+':'+destContact.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
+            global.KAD_MOCKUP[destContact.hostname+':'+destContact.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
         }, Math.floor( Math.random() * 100) + 10)
     }
 

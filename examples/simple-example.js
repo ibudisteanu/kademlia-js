@@ -21,8 +21,8 @@ const nodes = contacts.map( contact => new KAD.implementations.KademliaNodeMock(
 nodes.map( it => it.start() );
 
 //encountering
-nodes[0].bootstrap( contacts[1] );
-nodes[0].bootstrap( contacts[2] );
+nodes[0].bootstrap( contacts[1], true );
+nodes[0].bootstrap( contacts[2], true );
 nodes[1].bootstrap( contacts[2] );
 nodes[2].bootstrap( contacts[3] );
 nodes[2].bootstrap( contacts[4] );
