@@ -7,7 +7,7 @@ const store = new KAD.StoreMemory();
 
 console.log("Large KAD");
 
-const nodesCount = 100;
+const nodesCount = 1000;
 const dataCount = 100;
 
 

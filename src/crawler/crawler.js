@@ -7,6 +7,7 @@ module.exports = class Crawler {
     constructor(kademliaNode) {
         this._kademliaNode = kademliaNode;
 
+
         this._updateContactQueue = async.queue(
             (task, cb) => this._updateContactWorker(task, cb),
             1
@@ -219,5 +220,7 @@ module.exports = class Crawler {
         })
 
     }
+
+
 
 }
