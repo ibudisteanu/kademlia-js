@@ -4,10 +4,9 @@ const async = require('async');
 KAD.init({});
 const store = new KAD.StoreMemory();
 
-
 console.log("Large KAD");
 
-const nodesCount = 1000;
+const nodesCount = 2000;
 const dataCount = 100;
 
 
