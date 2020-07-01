@@ -1,6 +1,6 @@
 const KademliaRules = require('../../kademlia-rules')
 
-const MOCKUP_SEND_ERROR_FREQUENCY = 0.01;
+const MOCKUP_SEND_ERROR_FREQUENCY = 0.001;
 
 module.exports = class KademliaRulesMock extends KademliaRules {
 
@@ -21,7 +21,7 @@ module.exports = class KademliaRulesMock extends KademliaRules {
 
         //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.hostname+':'+destContact.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
-            console.error("LOG: Message couldn't be sent", command, destContact);
+            console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.hostname, destContact.port );
             return cb(new Error("Message couldn't be sent"), null);
         }
 

@@ -23,10 +23,11 @@ nodes.map( it => it.start() );
 //encountering
 nodes[0].bootstrap( contacts[1], true );
 nodes[0].bootstrap( contacts[2], true );
-nodes[1].bootstrap( contacts[2] );
-nodes[2].bootstrap( contacts[3] );
-nodes[2].bootstrap( contacts[4] );
-nodes[4].bootstrap( contacts[5] );
+nodes[1].bootstrap( contacts[2], false );
+nodes[1].bootstrap( contacts[4], false );
+nodes[2].bootstrap( contacts[3], false );
+nodes[2].bootstrap( contacts[4], false );
+nodes[4].bootstrap( contacts[5], false );
 
 setTimeout(()=>{
 

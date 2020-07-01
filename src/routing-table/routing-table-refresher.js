@@ -25,23 +25,25 @@ module.exports = class RoutingTableRefresher {
     }
 
     _createIntervalRefresh(){
-        this._intervalRefresh = setTimeout(
+        if (this._timeoutRefresh) clearTimeout(this._timeoutRefresh)
+        this._timeoutRefresh = setTimeout(
             () => this.refresh(0),
             global.KAD_OPTIONS.T_BUCKETS_REFRESH + this._preventConvoy(),
         );
     }
 
     _createIntervalReplicate(){
-        delete this._iteratorReplicate;
-        this._intervalReplicate = setTimeout(
+        if (this._timeoutReplicate) clearTimeout(this._timeoutReplicate);
+        delete this._iteratorReplicate; 
+        this._timeoutReplicate = setTimeout(
             () => this._replicate(() => {} ),
             global.KAD_OPTIONS.T_BUCKETS_REPLICATE + this._preventConvoy(),
         );
     }
 
     stop(){
-        clearInterval(this._intervalRefresh);
-        clearInterval(this._intervalReplicate);
+        clearTimeout(this._timeoutRefresh);
+        clearTimeout(this._timeoutReplicate);
     }
 
 
@@ -54,23 +56,54 @@ module.exports = class RoutingTableRefresher {
     refresh(startIndex = 0, callback = () => null) {
         const now = Date.now();
 
+        /**
+         *  We want to avoid high churn during refresh and prevent further
+         *  refreshes if lookups in the next bucket do not return any new
+         *  contacts. To do this we will shuffle the bucket indexes we are
+         *  going to check and only continue to refresh if new contacts were
+         *  discovered in the last MAX_UNIMPROVED_REFRESHES consecutive lookups.
+         * @type {Set<any>}
+         */
+
+        let results = new Set(), consecutiveUnimprovedLookups = 0, finished = false;
         async.each(  this._routingTable.buckets, (bucket, next) => {
 
-            const bucketHasContacts = bucket.length > 0;
+            if (finished) return next();
+
+            if (consecutiveUnimprovedLookups >= global.KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES){
+                finished = true;
+                return next();
+            }
+
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
             const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
 
-            if (bucketHasContacts && needsRefresh) {
+            if (bucket.length > 0 && needsRefresh) {
                 return this._kademliaNode.crawler.iterativeFindNode(
                     BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
-                    next,
+                    (err, contacts )=>{
+                        if (err) return next(err);
+                        let discoveredNewContacts = false;
+
+                        for (let contact of contacts)
+                            if (!results.has(contact.identityHex)) {
+                                discoveredNewContacts = true;
+                                consecutiveUnimprovedLookups = 0;
+                                results.add(contact.identityHex);
+                            }
+
+                        if (!discoveredNewContacts)
+                            consecutiveUnimprovedLookups++;
+
+                        next();
+                    },
                 );
             }else
                 next();
 
         }, (err, out ) => {
-            callback(err, out);
             this._createIntervalRefresh();
+            callback(err, out);
         });
     }
 

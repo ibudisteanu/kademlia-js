@@ -49,10 +49,10 @@ nodes[0].bootstrap(contacts[1], true, ()=>{
     nodes[0].bootstrap(contacts[2], true, ()=>{
 
         async.each( nodesList, (node, next) =>{
-            node.bootstrap( contacts[0], (err, out) => next() );
-        }, ()=>{
+            node.bootstrap( contacts[0], false, next );
+        }, (err, out)=>{
 
-            console.log("bootstrap finished ");
+            console.log("bootstrap finished ", err, out);
 
             async.each(files, (file, next)=>{
                 const nodeIndex = Math.floor( Math.random() * contacts.length );
