@@ -12,6 +12,14 @@ module.exports = class HTTPServer extends EventEmitter {
         this.server.on('error', (err) => this.emit('error', err));
     }
 
+    start(){
+
+    }
+
+    stop(){
+
+    }
+
     _createServer() {
         return http.createServer();
     }
@@ -27,7 +35,7 @@ module.exports = class HTTPServer extends EventEmitter {
         if (this.server.listeners('request').length)
             return;
 
-        this.server.on('request', (req, res) => this._handle(req, res));
+        this.server.on('request', this._handle.bind(this) );
     }
 
     /**
@@ -35,18 +43,17 @@ module.exports = class HTTPServer extends EventEmitter {
      * waiting
      * @private
      */
-    _timeoutPending() {
+    _timeoutPending(cb) {
         const now = Date.now();
 
-        this._pending.forEach(({ timestamp, response }, id) => {
-            let timeout = timestamp + constants.T_RESPONSETIMEOUT;
-
-            if (now >= timeout) {
-                response.statusCode = 504;
-                response.end('Gateway Timeout');
-                this._pending.delete(id);
+        for (const key in this._pending)
+            if (now >= this._pending[key].timestamp + global.KAD_OPTIONS.T_RESPONSE_TIMEOUT) {
+                this._pending[key].response.statusCode = 504;
+                this._pending[key].response.end('Gateway Timeout');
+                delete this._pending[key];
             }
-        });
+
+        cb(null)
     }
 
     /**
@@ -57,9 +64,9 @@ module.exports = class HTTPServer extends EventEmitter {
         let [, contact] = target;
 
         // NB: If responding to a received request...
-        if (this._pending.has(id)) {
-            this._pending.get(id).response.end(buffer);
-            this._pending.delete(id);
+        if (this._pending[id]) {
+            this._pending[id].response.end(buffer);
+            delete this._pending[id];
             return callback(null);
         }
 
@@ -126,10 +133,10 @@ module.exports = class HTTPServer extends EventEmitter {
             return res.end();
 
         req.pipe(concat((buffer) => {
-            this._pending.set(req.headers['x-kad-message-id'], {
+            this._pending[ req.headers['x-kad-message-id'] ] = {
                 timestamp: Date.now(),
                 response: res
-            });
+            };
             this.push(buffer);
         }));
     }

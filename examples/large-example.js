@@ -1,6 +1,8 @@
 const KAD = require('./../index');
 const async = require('async');
 
+const NodeClass = KAD.implementations.KademliaNodeHTTP;
+
 KAD.init({});
 const store = new KAD.StoreMemory();
 
@@ -22,12 +24,10 @@ for (let i=0; i < dataCount; i++)
         value: KAD.helpers.StringUtils.genHexString(40)
     })
 
-
-const nodes = contacts.map( contact => new KAD.implementations.KademliaNodeMock(contact, store) )
+const nodes = contacts.map( contact => new NodeClass(contact, store) )
 nodes.map( it => it.start() );
 
 const nodesList = [];
-
 
 let i=3, visited = {0: true, 1: true, 2: true}, bootstrappedCount = 0;
 while (i < contacts.length) {
@@ -46,7 +46,7 @@ while (i < contacts.length) {
 const outBootstrap = [], outFiles = [];
 nodes[0].bootstrap(contacts[1], true, ()=>{
 
-    nodes[0].bootstrap(contacts[2], true, ()=>{
+    nodes[0].bootstrap( contacts[2], true, () => {
 
         async.each( nodesList, (node, next) =>{
             node.bootstrap( contacts[0], false, (err, out) => {
