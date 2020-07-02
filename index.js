@@ -6,6 +6,7 @@ const Contact = require('./src/contact/contact')
 const RoutingTable = require('./src/routing-table/routing-table')
 
 const KademliaNodeMock = require('./src/implementations/mock/kademlia-node-mock')
+const KademliaNodeHTTP = require('./src/implementations/servers/kademlia-node-http')
 
 const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
@@ -37,6 +38,7 @@ module.exports = {
 
     implementations:{
         KademliaNodeMock,
+        KademliaNodeHTTP,
     }
 
 }

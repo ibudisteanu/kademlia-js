@@ -1,7 +1,8 @@
 const BufferUtils = require('../helpers/buffer-utils')
 const async = require('async')
 const NextTick = require('./../helpers/next-tick')
-
+const {setAsyncInterval, clearAsyncInterval} = require('./../helpers/async-interval')
+const Utils = require('./../helpers/utils')
 module.exports = class RoutingTableRefresher {
 
     constructor(kademliaNode, routingTable) {
@@ -16,35 +17,31 @@ module.exports = class RoutingTableRefresher {
         this._publishedByMe[key] = true;
     }
 
-    _preventConvoy( timeout = 30 * 60 * 1000) {
-        return Math.ceil( Math.random() * timeout );
-    }
 
     start(){
-        this._createTimeoutRefresh();
-        this._createTimeoutReplicate();
-    }
 
-    _createTimeoutRefresh(){
-        if (this._timeoutRefresh) clearTimeout(this._timeoutRefresh)
-        this._timeoutRefresh = setTimeout(
-            () => this.refresh(0, () => {} ),
-            global.KAD_OPTIONS.T_BUCKETS_REFRESH + this._preventConvoy(),
-        );
-    }
+        if (this._started) throw "Refresher already started";
 
-    _createTimeoutReplicate(){
-        if (this._timeoutReplicate) clearTimeout(this._timeoutReplicate);
-        delete this._iteratorReplicate; 
-        this._timeoutReplicate = setTimeout(
-            () => this._replicate(() => {} ),
-            global.KAD_OPTIONS.T_BUCKETS_REPLICATE + this._preventConvoy(),
-        );
+        this._intervalRefresh = setAsyncInterval(
+            next => this.refresh(0, next ),
+            global.KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
+        )
+
+        this._intervalReplicate = setAsyncInterval(
+            next => this._replicate(undefined, next),
+            global.KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
+        )
+
+        this._started = true;
     }
 
     stop(){
-        clearTimeout(this._timeoutRefresh);
-        clearTimeout(this._timeoutReplicate);
+        if (!this._started) throw "Refresher wasn't started";
+
+        clearAsyncInterval(this._intervalRefresh);
+        clearAsyncInterval(this._intervalReplicate);
+
+        this._started = false;
     }
 
 
@@ -103,19 +100,18 @@ module.exports = class RoutingTableRefresher {
             next();
 
         }, (err, out ) => {
-            this._createTimeoutRefresh();
             callback(err, out);
         });
     }
 
 
-    _replicate(cb){
+    _replicate(iterator, cb){
 
         const now = Date.now();
-        if ( !this._iteratorReplicate  )
-            this._iteratorReplicate = this._kademliaNode._store.iterator();
+        if ( !iterator  )
+            iterator = this._kademliaNode._store.iterator();
 
-        let itValue = this._iteratorReplicate.next();
+        let itValue = iterator.next();
         while (itValue.value && !itValue.done){
 
             const key = itValue.value[0];
@@ -129,14 +125,13 @@ module.exports = class RoutingTableRefresher {
 
             if (shouldReplicate || shouldRepublish) 
                 return this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => {
-                    NextTick(this._replicate.bind(this, cb), 1);
+                    NextTick(this._replicate.bind(this, iterator, cb), 1);
                 });
 
         }
 
         if (!itValue.value || !itValue.done) {
             cb(null, true);
-            this._createTimeoutReplicate();
         }
 
     }

@@ -1,6 +1,8 @@
 const Validation = require('./helpers/validation')
 const BufferUtils = require('./helpers/buffer-utils')
 const NextTick = require('./helpers/next-tick')
+const {setAsyncInterval, clearAsyncInterval} = require('./helpers/async-interval')
+const {preventConvoy} = require('./helpers/utils')
 
 module.exports = class KademliaRules {
 
@@ -11,11 +13,18 @@ module.exports = class KademliaRules {
     }
 
     start(){
-        this._createTimeoutReplicateStoreToNewNodeExpire();
+        /**
+         * USED to avoid memory leaks, from time to time, we have to clean this._replicatedStoreToNewNodesAlready
+         * @private
+         */
+        this._asyncIntervalReplicatedStoreToNewNodeExpire = setAsyncInterval(
+            this._replicatedStoreToNewNodeExpire.bind(this),
+            global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
+        );
     }
 
     stop(){
-        clearTimeout(this._timeoutReplicatedStoreToNewNodeExpire);
+        clearAsyncInterval(this._asyncIntervalReplicatedStoreToNewNodeExpire)
     }
 
     send(destContact, command, data, cb){
@@ -197,26 +206,14 @@ module.exports = class KademliaRules {
      * Clear expired _replicatedStoreToNewNodesAlready
      * @private
      */
-    _replicatedStoreToNewNodeExpire(){
+    _replicatedStoreToNewNodeExpire(next){
         
         const expiration = new Date() - global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY;
         for (const identityHex in this._replicatedStoreToNewNodesAlready)
             if (this._replicatedStoreToNewNodesAlready[identityHex] < expiration )
                 delete this._replicatedStoreToNewNodesAlready[identityHex];
 
-        this._createTimeoutReplicateStoreToNewNodeExpire();
-    }
-
-    /**
-     * USED to avoid memory leaks, from time to time, we have to clean this._replicatedStoreToNewNodesAlready
-     * @private
-     */
-    _createTimeoutReplicateStoreToNewNodeExpire(){
-        if (this._timeoutReplicatedStoreToNewNodeExpire) clearTimeout(this._timeoutReplicatedStoreToNewNodeExpire)
-        this._timeoutReplicatedStoreToNewNodeExpire = setTimeout(
-            this._replicatedStoreToNewNodeExpire.bind(this),
-            global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY + this._preventConvoy(global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
-        );
+        next()
     }
 
 }

@@ -1,3 +1,7 @@
+module.exports.validateProtocol = (protocol) => {
+    if (protocol !== 'udp' && protocol !== 'http' && protocol !== 'https') throw "invalid protocol";
+}
+
 module.exports.validateHostname = (hostname) => {
     if (typeof hostname !== "string" || hostname.length < 5) throw "invalid Hostname";
 }

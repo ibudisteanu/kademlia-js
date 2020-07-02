@@ -1,4 +1,6 @@
 const NextTick = require('./../helpers/next-tick')
+const {setAsyncInterval, clearAsyncInterval} = require('./../helpers/async-interval')
+const Utils = require('./../helpers/utils')
 
 module.exports = class Store{
 
@@ -7,21 +9,21 @@ module.exports = class Store{
     }
 
     start(){
-        if (this._start) throw "Store already started";
+        if (this._started) throw "Store already started";
 
-        if (!this._timeoutExpireOldKeys)
-            this._createIntervalExpireOldKeys();
+        this._asyncIntervalExpireOldKeys = setAsyncInterval(
+            this._expireOldKeys.bind(this),
+            global.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR + Utils.preventConvoy(5 * 60 * 1000)
+        );
 
         this._started = true;
     }
 
     stop(){
-        if (!this._start) throw "Stor already closed";
+        if (!this._started) throw "Store already closed";
 
-        if (this._timeoutExpireOldKeys) {
-            clearTimeout(this._timeoutExpireOldKeys)
-            this._timeoutExpireOldKeys = undefined;
-        }
+        clearAsyncInterval(this._asyncIntervalExpireOldKeys);
+
         this._started = false;
     }
 
@@ -49,24 +51,22 @@ module.exports = class Store{
     delExpiration(key, cb){
     }
 
-    _expireOldKeys(){
+    _expireOldKeys(cb, iterator){
 
-        const itValue =  this._expirationIterator.next();
+        if (!iterator)
+            iterator = this._iteratorExpiration();
+
+        const itValue =  iterator.next();
         if (itValue.value && !itValue.done){
             const time = itValue.value[1];
             if (time < Date.now() ){
                 const key = itValue.value[0].splice(0, itValue[0].length-4 );
-                this.del(key, () => NextTick( this._expireOldKeys.bind(this), gobal.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR_SLEEP ) )
+                this.del(key, () => NextTick( this._expireOldKeys.bind(this, cb, iterator), gobal.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR_SLEEP ) )
             }
-        } else {
-            this._createIntervalExpireOldKeys();
-        }
+        } else
+            cb()
 
     }
 
-    _createIntervalExpireOldKeys(){
-        this._expirationIterator = this._iteratorExpiration();
-        this._timeoutExpireOldKeys = setTimeout(this._expireOldKeys.bind(this), global.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR);
-    }
 
 }

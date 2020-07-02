@@ -19,17 +19,15 @@ module.exports = class KademliaNode {
 
     start() {
         if (this._started) throw "Already started";
-        this._started = true;
         this.routingTable.start();
         this.rules.start();
-        this._store.start();
+        this._started = true;
     }
 
     stop() {
         if (!this._started) throw "Already stopped";
         this.routingTable.stop();
         this.rules.stop();
-        this._store.stop();
         this._started = false;
     }
 

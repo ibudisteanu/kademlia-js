@@ -2,12 +2,14 @@ const Validation = require('./../helpers/validation')
 
 module.exports = class Contact{
 
-    constructor(hostname, port, identity){
+    constructor(protocol, hostname, port, identity){
 
+        Validation.validateProtocol(protocol);
         Validation.validateHostname(hostname);
         Validation.validatePort(port);
         Validation.validateIdentity(identity);
 
+        this.protocol = protocol;
         this.hostname = hostname;
         this.port = port;
         this.identity = identity;
@@ -15,7 +17,7 @@ module.exports = class Contact{
     }
 
     clone(){
-        return new Contact(this.hostname, this.port, Buffer.from( this.identityHex, 'hex') );
+        return new Contact(this.protocol, this.hostname, this.port, Buffer.from( this.identityHex, 'hex') );
     }
 
 }
