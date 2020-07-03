@@ -33,7 +33,7 @@ module.exports = class KademliaRules {
 
     receive(srcContact, command, data, cb){
         if (command === 'PING') return this.ping(srcContact, cb);
-        if (command === 'STORE') return this.store(srcContact, data[0], data[1] , cb);
+        if (command === 'STORE') return this.store(srcContact, data, cb);
         if (command === 'FIND_NODE') return this.findNode(srcContact, data[0], cb);
         if (command === 'FIND_VALUE') return this.findValue(srcContact, data[0], cb);
         throw "invalid command";
@@ -60,7 +60,7 @@ module.exports = class KademliaRules {
      * @param value
      * @param cb
      */
-    store(srcContact, key, value, cb) {
+    store(srcContact, [key, value], cb) {
 
         try{
             if (typeof key === "string")  key = Buffer.from(key, 'hex');
@@ -74,7 +74,15 @@ module.exports = class KademliaRules {
         this._store.put(key.toString('hex'), value, cb);
     }
 
-    sendStore(contact, key, value, cb){
+    sendStore(contact, [key, value], cb){
+
+        try{
+            if (typeof key === "string")  key = Buffer.from(key, 'hex');
+            Validation.validateLookup(key);
+        }catch(err){
+            return cb(err);
+        }
+
         this.send(contact,'STORE', [key, value], cb)
     }
 
@@ -184,7 +192,7 @@ module.exports = class KademliaRules {
             }
 
             if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  )
-                return this.sendStore(contact, key, value, (err, out) => {
+                return this.sendStore(contact, [key, value], (err, out) => {
 
                     if (err)
                         return cb(err); //error

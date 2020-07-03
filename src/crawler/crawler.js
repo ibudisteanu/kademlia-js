@@ -70,7 +70,13 @@ module.exports = class Crawler {
             return cb(err);
         }
 
-        this._iterativeFind('FIND_VALUE', key, cb);
+        this._kademliaNode._store.get(key, (err, out)=>{
+
+            if (out) cb(null, out);
+            this._iterativeFind('FIND_VALUE', key, cb);
+
+        });
+
     }
 
     _iterativeFind(method, key, cb){
@@ -89,7 +95,7 @@ module.exports = class Crawler {
             //mark this node as contacted so as to avoid repeats
             shortlist.contacted(contact);
 
-            this._kademliaNode.rules.send(contact, 'FIND_NODE', [key], (err, result) => {
+            this._kademliaNode.rules.send(contact, method, [key], (err, result) => {
 
                 if (finished || err) return next(null, null);
 
@@ -160,7 +166,7 @@ module.exports = class Crawler {
         function dispatchSendStore(contacts, done){
             //TODO parallelLimit or eachLimit
             async.parallelLimit(
-                contacts.map( node => done => self._kademliaNode.rules.sendStore( node, key, value, (err, out)=>{
+                contacts.map( node => done => self._kademliaNode.rules.sendStore( node, [key, value], (err, out)=>{
                     stored = err ? stored : stored + 1;
                     done(null, out);
                 }) )

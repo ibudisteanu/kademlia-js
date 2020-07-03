@@ -3,8 +3,6 @@ const https = require('https');
 const EventEmitter = require('events');
 const {setAsyncInterval, clearAsyncInterval} = require('./../../helpers/async-interval')
 const uuid = require('uuid').v1;
-const bencode = require('bencode');
-const Contact = require('../../contact/contact')
 
 module.exports = class HTTPServer extends EventEmitter {
 
@@ -81,9 +79,7 @@ module.exports = class HTTPServer extends EventEmitter {
      * Implements the writable interface
      * @private
      */
-    write( id, destContact, command, data, callback) {
-
-        const buffer = bencode.encode([this._kademliaNode.contact.toJSON(), command, data])
+    write( id, destContact,  buffer, callback) {
 
         if (this._pending[id]){
             this._pending[id].response.end(buffer);
@@ -130,8 +126,7 @@ module.exports = class HTTPServer extends EventEmitter {
                 }
 
                 const bufferAnswer = Buffer.concat(data);
-                const decoded = bencode.decode(bufferAnswer);
-                callback(null, ...decoded);
+                callback(null, bufferAnswer);
 
             });
 
@@ -181,17 +176,11 @@ module.exports = class HTTPServer extends EventEmitter {
                 response: res
             };
             const buffer = Buffer.concat(data);
-            const decoded = bencode.decode(buffer);
 
-            if (decoded){
-                decoded[0] = new Contact( decoded[0].protocol.toString(), decoded[0].hostname.toString(), decoded[0].port, decoded[0].path, decoded[0].identity );
-                decoded[1] = decoded[1].toString(); //command
-                this.onReceive(...decoded, (err, answer)=>{
-                    console.log(err, answer);
-                    const bufferAnswer = bencode.encode(answer);
-                    res.end(bufferAnswer)
-                });
-            }
+            this.onReceive( buffer, (err, buffer)=>{
+                res.end(buffer)
+            });
+
         });
 
     }
