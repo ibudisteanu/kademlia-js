@@ -44,7 +44,7 @@ module.exports = class ContactList {
      * Adds the given contacts to the list
      * @param {Bucket~contact[]} contacts
      */
-    add(contacts) {
+    add(contacts= []) {
 
         const added = [];
 

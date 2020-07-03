@@ -1,23 +1,42 @@
 const http = require('http');
 const https = require('https');
 const EventEmitter = require('events');
+const {setAsyncInterval, clearAsyncInterval} = require('./../../helpers/async-interval')
+const uuid = require('uuid').v1;
+const bencode = require('bencode');
+const Contact = require('../../contact/contact')
 
 module.exports = class HTTPServer extends EventEmitter {
 
-    constructor() {
+    constructor(kademliaNode, onReceive ) {
         super();
+
+        this._kademliaNode = kademliaNode;
+        this._started = false;
+
+        this.onReceive = onReceive;
 
         this._pending = {};
         this.server = this._createServer(this._options);
-        this.server.on('error', (err) => this.emit('error', err));
+        this.server.on('error', err => this.emit('error', err));
+
+        this.on('error',(err)=>{
+            console.log(err);
+        })
     }
 
     start(){
-
+        if (this._started) throw new Error("HTTP Server already started");
+        this.listen( this._kademliaNode.contact.port );
+        this._read();
+        setAsyncInterval( this._timeoutPending.bind(this), global.KAD_OPTIONS.T_RESPONSE_TIMEOUT );
+        this._started = true;
     }
 
     stop(){
-
+        if (!this._started) throw new Error("HTTP Server already stopped");
+        this.close();
+        this._started = false;
     }
 
     _createServer() {
@@ -25,6 +44,7 @@ module.exports = class HTTPServer extends EventEmitter {
     }
 
     _createRequest(options) {
+
         if (options.protocol === 'https')
             return https.request(...arguments);
 
@@ -32,6 +52,7 @@ module.exports = class HTTPServer extends EventEmitter {
     }
 
     _read() {
+
         if (this.server.listeners('request').length)
             return;
 
@@ -60,51 +81,68 @@ module.exports = class HTTPServer extends EventEmitter {
      * Implements the writable interface
      * @private
      */
-    _write([id, buffer, target], encoding, callback) {
-        let [, contact] = target;
+    write( id, destContact, command, data, callback) {
 
-        // NB: If responding to a received request...
-        if (this._pending[id]) {
+        const buffer = bencode.encode([this._kademliaNode.contact.toJSON(), command, data])
+
+        if (this._pending[id]){
             this._pending[id].response.end(buffer);
             delete this._pending[id];
             return callback(null);
         }
 
         // NB: If originating an outbound request...
+        let protocol = '';
+        if (destContact.protocol === 'http') protocol = '';
+        else if (destContact.protocol === 'https') protocol = 'https:';
+
         const reqopts = {
-            hostname: contact.hostname,
-            port: contact.port,
-            protocol: contact.protocol,
+            hostname: destContact.hostname,
+            port: destContact.port,
+            protocol: protocol,
             method: 'POST',
             headers: {
-                'x-kad-message-id': id
-            }
+                'x-kad-id': id
+            },
+            encoding: 'binary',
         };
 
-        if (typeof contact.path === 'string')
-            reqopts.path = contact.path;
+        //optional path
+        if ( destContact.path) reqopts.path = destContact.path;
 
         const request = this._createRequest(reqopts);
 
         request.on('response', (response) => {
-            response.on('error', (err) => this.emit('error', err));
-            response.pipe(concat((buffer) => {
+
+            response.on('error', (err) => {
+                this.emit('error', err)
+                callback(err)
+            });
+
+            const data = [];
+            response.on('data', (chunk) => {
+                data.push(chunk);
+            }).on('end', () => {
                 if (response.statusCode >= 400) {
-                    let err = new Error(buffer.toString());
+                    const err = new Error(buffer.toString());
                     err.dispose = id;
-                    this.emit('error', err);
-                } else {
-                    this.push(buffer);
+                    return this.emit('error', err);
                 }
-            }));
+
+                const bufferAnswer = Buffer.concat(data);
+                const decoded = bencode.decode(bufferAnswer);
+                callback(null, ...decoded);
+
+            });
+
         });
 
         request.on('error', (err) => {
             err.dispose = id;
             this.emit('error', err);
+            callback(err)
         });
         request.end(buffer);
-        callback();
     }
 
     /**
@@ -112,33 +150,50 @@ module.exports = class HTTPServer extends EventEmitter {
      * @private
      */
     _handle(req, res) {
-        req.on('error', (err) => this.emit('error', err));
-        res.on('error', (err) => this.emit('error', err));
 
-        if (!req.headers['x-kad-message-id']) {
+        req.on('error', (err) => this.emit('error', err));
+
+        const id = req.headers['x-kad-id'];
+        if (!id) {
             res.statusCode = 400;
             return res.end();
         }
 
-        res.setHeader('X-Kad-Message-ID', req.headers['x-kad-message-id']);
+        res.setHeader('x-kad-id', req.headers['x-kad-id']);
         res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
         res.setHeader('Access-Control-Allow-Methods', '*');
         res.setHeader('Access-Control-Allow-Headers', '*');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
 
-        if (req.method === 'POST' || req.method === 'OPTIONS')
+        if (req.method !== 'POST' && req.method !== 'OPTIONS')
             res.statusCode = 405;
 
         if (req.method !== 'POST')
             return res.end();
 
-        req.pipe(concat((buffer) => {
-            this._pending[ req.headers['x-kad-message-id'] ] = {
+        const data = [];
+        req.on('data', (chunk) => {
+            data.push(chunk);
+        }).on('end', () => {
+
+            this._pending[id] = {
                 timestamp: Date.now(),
                 response: res
             };
-            this.push(buffer);
-        }));
+            const buffer = Buffer.concat(data);
+            const decoded = bencode.decode(buffer);
+
+            if (decoded){
+                decoded[0] = new Contact( decoded[0].protocol.toString(), decoded[0].hostname.toString(), decoded[0].port, decoded[0].path, decoded[0].identity );
+                decoded[1] = decoded[1].toString(); //command
+                this.onReceive(...decoded, (err, answer)=>{
+                    console.log(err, answer);
+                    const bufferAnswer = bencode.encode(answer);
+                    res.end(bufferAnswer)
+                });
+            }
+        });
+
     }
 
 
@@ -150,5 +205,8 @@ module.exports = class HTTPServer extends EventEmitter {
         this.server.listen(...arguments);
     }
 
+    close(){
+        this.server.close(...arguments);
+    }
 
 }

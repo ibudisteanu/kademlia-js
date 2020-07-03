@@ -5,6 +5,7 @@
   },
   "dependencies": {
     "async": "^3.2.0",
+    "bencode": "^2.0.1",
     "uuid": "^8.2.0"
   }
 }

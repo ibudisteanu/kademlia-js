@@ -1,10 +1,13 @@
 const KademliaNode = require('./../../kademlia-node')
-const HTTPServer = require('./http-server')
+const KademliaRulesHTTP = require('./kademlia-rules-http')
 
 module.exports = class KademliaNodeHTTP extends KademliaNode{
 
-    constructor(contact, store, options) {
-        super(contact, store, options)
+    constructor(contact, store, options = {}) {
+        super(contact, store, {
+            KademliaRules: KademliaRulesHTTP,
+            ...options,
+        })
     }
 
 }
