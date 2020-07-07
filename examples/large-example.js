@@ -48,11 +48,11 @@ nodes[0].bootstrap(contacts[1], true, ()=>{
 
     nodes[0].bootstrap( contacts[2], true, () => {
 
-        async.eachLimit( nodesList, 100, (node, next) =>{
+        async.eachLimit( nodesList, 25, (node, next) =>{
             node.bootstrap( contacts[0], false, (err, out) => {
                 next(null, out)
                 outBootstrap.push(out);
-                console.log("out",  outBootstrap.length);
+                console.log("joined already",  outBootstrap.length);
             } );
         }, (err, out)=>{
 

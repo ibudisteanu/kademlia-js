@@ -6,6 +6,10 @@ module.exports.validateHostname = (hostname) => {
     if (typeof hostname !== "string" || hostname.length < 5) throw "invalid Hostname";
 }
 
+module.exports.validatePath = (path) => {
+    if (typeof path !== "string" || path.length > 10) throw "invalid Path";
+}
+
 module.exports.validatePort = (port) => {
     if (typeof port !== "number" || port < 1000 || port > 65535) throw "invalid port";
 }

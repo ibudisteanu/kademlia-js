@@ -9,6 +9,7 @@ module.exports = class Contact{
         Validation.validateProtocol(protocol);
         Validation.validateHostname(hostname);
         Validation.validatePort(port);
+        Validation.validatePath(path);
 
         this.identity = identity;
         this.identityHex = identity.toString('hex')
