@@ -8,7 +8,7 @@ const store = new KAD.StoreMemory();
 
 console.log("Large KAD");
 
-const nodesCount = 2000;
+const nodesCount = 1000;
 const dataCount = 100;
 
 
@@ -48,10 +48,11 @@ nodes[0].bootstrap(contacts[1], true, ()=>{
 
     nodes[0].bootstrap( contacts[2], true, () => {
 
-        async.each( nodesList, (node, next) =>{
+        async.eachLimit( nodesList, 100, (node, next) =>{
             node.bootstrap( contacts[0], false, (err, out) => {
                 next(null, out)
                 outBootstrap.push(out);
+                console.log("out",  outBootstrap.length);
             } );
         }, (err, out)=>{
 

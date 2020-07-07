@@ -38,18 +38,18 @@ const processTimeout = (id) => {
         map[id].processing = true;
         map[id].func(()=>{
 
-            map[id].processing = false;
-            if (!map[id].done) {
+            if (!map[id] || map[id].done) {
                 delete map[id];
                 return;
             }
+            map[id].processing = false;
 
-            NextTick( ()=>processTimeout( id), map[id].time );
+            map[id].timeout = NextTick( ()=>processTimeout( id ), map[id].time );
 
         })
 
 
     }catch(err){
-
+        console.error(err);
     }
 }

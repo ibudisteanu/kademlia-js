@@ -11,8 +11,9 @@ module.exports = class Store{
     start(){
         if (this._started) throw "Store already started";
 
+        delete this._expireOldKeysIterator;
         this._asyncIntervalExpireOldKeys = setAsyncInterval(
-            this._expireOldKeys.bind(this),
+            next => this._expireOldKeys(next),
             global.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR + Utils.preventConvoy(5 * 60 * 1000)
         );
 
@@ -51,20 +52,22 @@ module.exports = class Store{
     delExpiration(key, cb){
     }
 
-    _expireOldKeys(cb, iterator){
+    _expireOldKeys(next){
 
-        if (!iterator)
-            iterator = this._iteratorExpiration();
+        if (!this._expireOldKeysIterator)
+            this._expireOldKeysIterator = this._iteratorExpiration();
 
-        const itValue =  iterator.next();
+        const itValue =  this._expireOldKeysIterator.next();
         if (itValue.value && !itValue.done){
             const time = itValue.value[1];
             if (time < Date.now() ){
                 const key = itValue.value[0].splice(0, itValue[0].length-4 );
-                this.del(key, () => NextTick( this._expireOldKeys.bind(this, cb, iterator), gobal.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR_SLEEP ) )
+                this.del(key, next, gobal.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR_SLEEP )
             }
-        } else
-            cb()
+        } else {
+            delete this._expireOldKeysIterator;
+            next()
+        }
 
     }
 

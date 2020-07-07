@@ -20,7 +20,7 @@ module.exports = class Contact{
     }
 
     clone(){
-        return new Contact(this.protocol, this.hostname, this.port, this.path, Buffer.from( this.identityHex, 'hex') );
+        return new Contact( Buffer.from( this.identityHex, 'hex'), this.protocol, this.hostname, this.port, this.path );
     }
 
     //used for bencode

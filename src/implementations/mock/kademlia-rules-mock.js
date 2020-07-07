@@ -26,7 +26,7 @@ module.exports = class KademliaRulesMock extends KademliaRules {
         }
 
         setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.hostname+':'+destContact.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
+           global.KAD_MOCKUP[destContact.hostname+':'+destContact.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
         }, Math.floor( Math.random() * 100) + 10)
     }
 

@@ -27,7 +27,11 @@ module.exports = class HTTPServer extends EventEmitter {
         if (this._started) throw new Error("HTTP Server already started");
         this.listen( this._kademliaNode.contact.port );
         this._read();
-        setAsyncInterval( this._timeoutPending.bind(this), global.KAD_OPTIONS.T_RESPONSE_TIMEOUT );
+        setAsyncInterval(
+            next => this._timeoutPending(next),
+            global.KAD_OPTIONS.T_RESPONSE_TIMEOUT
+        );
+
         this._started = true;
     }
 
@@ -62,7 +66,7 @@ module.exports = class HTTPServer extends EventEmitter {
      * waiting
      * @private
      */
-    _timeoutPending(cb) {
+    _timeoutPending(next) {
         const now = Date.now();
 
         for (const key in this._pending)
@@ -72,7 +76,7 @@ module.exports = class HTTPServer extends EventEmitter {
                 delete this._pending[key];
             }
 
-        cb(null)
+        next(null)
     }
 
     /**
@@ -146,7 +150,7 @@ module.exports = class HTTPServer extends EventEmitter {
      */
     _handle(req, res) {
 
-        req.on('error', (err) => this.emit('error', err));
+        req.on('error', err => this.emit('error', err));
 
         const id = req.headers['x-kad-id'];
         if (!id) {
@@ -171,14 +175,15 @@ module.exports = class HTTPServer extends EventEmitter {
             data.push(chunk);
         }).on('end', () => {
 
+            const buffer = Buffer.concat(data);
             this._pending[id] = {
                 timestamp: Date.now(),
                 response: res
             };
-            const buffer = Buffer.concat(data);
 
             this.onReceive( buffer, (err, buffer)=>{
-                res.end(buffer)
+                delete this._pending[id];
+                res.end(buffer);
             });
 
         });

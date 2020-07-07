@@ -51,7 +51,7 @@ module.exports = class RoutingTableRefresher {
      * refresh, an iterativeFindNode using that number as key.
      * @param {number} startIndex
      */
-    refresh(startIndex = 0, callback) {
+    refresh(startIndex = 0, cb) {
         const now = Date.now();
 
         /**
@@ -100,12 +100,12 @@ module.exports = class RoutingTableRefresher {
             next();
 
         }, (err, out ) => {
-            callback(err, out);
+            cb(err, out);
         });
     }
 
 
-    _replicate(iterator, cb){
+    _replicate(iterator, next){
 
         const now = Date.now();
         if ( !iterator  )
@@ -125,14 +125,14 @@ module.exports = class RoutingTableRefresher {
 
             if (shouldReplicate || shouldRepublish) 
                 return this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => {
-                    NextTick(this._replicate.bind(this, iterator, cb), 1);
+                    NextTick(this._replicate.bind(this, iterator, next), 1);
                 });
 
         }
 
-        if (!itValue.value || !itValue.done) {
-            cb(null, true);
-        }
+        if (!itValue.value || !itValue.done)
+            next();
+
 
     }
 

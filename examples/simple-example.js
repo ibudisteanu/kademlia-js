@@ -34,7 +34,6 @@ async.each( connections, ( connection, next) =>{
         console.log("iterativeFindValue", out);
     })
 
-
     let query2 = KAD.helpers.StringUtils.genHexString(40);
     nodes[3].crawler.iterativeStoreValue(query2, 'query2', (err, out)=>{
         console.log("iterativeStoreValue", out);

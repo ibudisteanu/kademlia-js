@@ -18,7 +18,7 @@ module.exports = class KademliaRules {
          * @private
          */
         this._asyncIntervalReplicatedStoreToNewNodeExpire = setAsyncInterval(
-            this._replicatedStoreToNewNodeExpire.bind(this),
+            next => this._replicatedStoreToNewNodeExpire(next),
             global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
         );
     }

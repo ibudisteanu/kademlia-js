@@ -31,8 +31,6 @@ module.exports = class KademliaRulesHTTP extends KademliaRules {
             if (err) cb(err);
 
             const decoded = bencode.decode(out);
-            if (command === 'PING' || command === 'STORE')
-                console.log(command, decoded)
 
             if (command === 'FIND_VALUE')
                 if ( Buffer.isBuffer(decoded) )

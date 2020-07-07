@@ -72,7 +72,7 @@ module.exports = class Crawler {
 
         this._kademliaNode._store.get(key, (err, out)=>{
 
-            if (out) cb(null, out);
+            if (out) return cb(null, out);
             this._iterativeFind('FIND_VALUE', key, cb);
 
         });
@@ -165,18 +165,18 @@ module.exports = class Crawler {
         let stored = 0, self = this;
         function dispatchSendStore(contacts, done){
             //TODO parallelLimit or eachLimit
-            async.parallelLimit(
-                contacts.map( node => done => self._kademliaNode.rules.sendStore( node, [key, value], (err, out)=>{
+            async.eachLimit( contacts, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+                ( node, next ) => self._kademliaNode.rules.sendStore( node, [key, value], (err, out)=>{
                     stored = err ? stored : stored + 1;
-                    done(null, out);
-                }) )
-            ,global.KAD_OPTIONS.ALPHA_CONCURRENCY, done)
+                    next(null, out);
+                }),
+            done)
         }
 
         async.waterfall([
             (next) => this.iterativeFindNode(key, next),
             (contacts, next) => dispatchSendStore(contacts, next),
-            (sendStoreOut, next) => self._kademliaNode._store.put(key, value, next )
+            (next) => self._kademliaNode._store.put(key, value, next )
         ], (err, out)=>{
             if (stored === 0 ) return cb(new Error("Failed to store key"));
             this._kademliaNode.routingTable.refresher.publishedByMe[key] = true;
