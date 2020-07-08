@@ -3,6 +3,8 @@ const Store = require('./src/store/store')
 const StoreMemory = require('./src/store/store-memory')
 const Config = require('./src/config')
 const Contact = require('./src/contact/contact')
+const ContactAddress = require('./src/contact/contact-address')
+
 const RoutingTable = require('./src/routing-table/routing-table')
 
 const KademliaNodeMock = require('./src/implementations/mock/kademlia-node-mock')
@@ -26,6 +28,7 @@ module.exports = {
     KademliaNode,
     RoutingTable,
     Contact,
+    ContactAddress,
 
     Store,
     StoreMemory,

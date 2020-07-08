@@ -15,7 +15,7 @@ const dataCount = 100;
 //addresses
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
-    contacts.push( new KAD.Contact( Buffer.from( KAD.helpers.StringUtils.genHexString(40), 'hex'), 'http', '127.0.0.1', 10000 + i, '' ),)
+    contacts.push( new KAD.Contact( Buffer.from( KAD.helpers.StringUtils.genHexString(40), 'hex'),  new KAD.ContactAddress('http', '127.0.0.1', 10000 + i, '' )),)
 
 const files = [];
 for (let i=0; i < dataCount; i++)
@@ -29,7 +29,7 @@ nodes.map( it => it.start() );
 
 const nodesList = [];
 
-let i=3, visited = {0: true, 1: true, 2: true}, bootstrappedCount = 0;
+let i=3, visited = {0: true, 1: true, 2: true};
 while (i < contacts.length) {
 
     let index = Math.floor(Math.random() * contacts.length);

@@ -25,7 +25,7 @@ module.exports = class HTTPServer extends EventEmitter {
 
     start(){
         if (this._started) throw new Error("HTTP Server already started");
-        this.listen( this._kademliaNode.contact.port );
+        this.listen( this._kademliaNode.contact.address.port );
         this._read();
         setAsyncInterval(
             next => this._timeoutPending(next),
@@ -93,12 +93,12 @@ module.exports = class HTTPServer extends EventEmitter {
 
         // NB: If originating an outbound request...
         let protocol = '';
-        if (destContact.protocol === 'http') protocol = '';
-        else if (destContact.protocol === 'https') protocol = 'https:';
+        if (destContact.address.protocol === 'http') protocol = '';
+        else if (destContact.address.protocol === 'https') protocol = 'https:';
 
         const reqopts = {
-            hostname: destContact.hostname,
-            port: destContact.port,
+            hostname: destContact.address.hostname,
+            port: destContact.address.port,
             protocol: protocol,
             method: 'POST',
             headers: {
@@ -108,7 +108,7 @@ module.exports = class HTTPServer extends EventEmitter {
         };
 
         //optional path
-        if ( destContact.path) reqopts.path = destContact.path;
+        if ( destContact.address.path) reqopts.address.path = destContact.address.path;
 
         const request = this._createRequest(reqopts);
 

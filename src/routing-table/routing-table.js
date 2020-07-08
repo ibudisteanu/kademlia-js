@@ -72,9 +72,9 @@ module.exports = class RoutingTable {
     }
 
 
-    _refreshContactItem(contact){
-        contact.pingLastCheck = Date.now();
-        this._sortBucket(contact.bucketIndex);
+    _refreshContactItem(contactItem){
+        contactItem.pingLastCheck = Date.now();
+        this._sortBucket( contactItem.bucketIndex );
     }
 
     _sortBucket(bucketIndex){
