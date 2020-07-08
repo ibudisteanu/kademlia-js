@@ -43,6 +43,7 @@ module.exports = {
     plugins: {
         PluginKademliaNodeMock,
         PluginKademliaNodeHTTP,
+        PluginSortedList,
     },
 
 }

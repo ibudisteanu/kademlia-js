@@ -57,7 +57,7 @@ module.exports = class Crawler {
             return cb(err);
         }
 
-        this._iterativeFind('FIND_NODE', key, cb);
+        this._iterativeFind('FIND_NODE', 'STORE', key, cb);
 
     }
 
@@ -73,13 +73,13 @@ module.exports = class Crawler {
         this._kademliaNode._store.get(key, (err, out)=>{
 
             if (out) return cb(null, out);
-            this._iterativeFind('FIND_VALUE', key, cb);
+            this._iterativeFind('FIND_VALUE', 'STORE', key, cb);
 
         });
 
     }
 
-    _iterativeFind(method, key, cb){
+    _iterativeFind(method, methodStore, key, cb){
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
 
@@ -103,7 +103,7 @@ module.exports = class Crawler {
                 shortlist.responded(contact);
 
                 //If the result is a contact/node list, just keep track of it
-                if ( Array.isArray(result) || method !== 'FIND_VALUE' ){
+                if ( Array.isArray(result) || method !== 'FIND_VALUE' || method !== 'FIND_SORTED_LIST' ){
                     const added = shortlist.add(result);
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
                     added.forEach(contact => this._updateContactFound(contact, () => null ));
@@ -115,7 +115,7 @@ module.exports = class Crawler {
                     const closestMissingValue = shortlist.active[0];
 
                     if (closestMissingValue)
-                        this._kademliaNode.rules.send(closestMissingValue, 'STORE', [key, result ], () => null );
+                        this._kademliaNode.rules.send(closestMissingValue, methodStore, [key, result ], () => null );
 
                     //  we found a value, so stop searching
                     finished = true;
@@ -160,29 +160,34 @@ module.exports = class Crawler {
 
     }
 
-    iterativeStoreValue(key, value, cb){
+    _iterativeStoreValue( data, method, storeCb, cb){
+
+        const key = data[0];
 
         let stored = 0, self = this;
         function dispatchSendStore(contacts, done){
-            //TODO parallelLimit or eachLimit
             async.eachLimit( contacts, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
-                ( node, next ) => self._kademliaNode.rules.sendStore( node, [key, value], (err, out)=>{
+                ( node, next ) => self._kademliaNode.rules[method]( node, data, (err, out)=>{
                     stored = err ? stored : stored + 1;
                     next(null, out);
                 }),
-            done)
+                done)
         }
 
         async.waterfall([
             (next) => this.iterativeFindNode(key, next),
             (contacts, next) => dispatchSendStore(contacts, next),
-            (next) => self._kademliaNode._store.put(key, value, next )
+            (next) => storeCb(data, next),
         ], (err, out)=>{
             if (stored === 0 ) return cb(new Error("Failed to store key"));
             this._kademliaNode.routingTable.refresher.publishedByMe[key] = true;
             cb(null, stored);
         })
 
+    }
+
+    iterativeStoreValue(key, value, cb){
+        return this._iterativeStoreValue( [key, value], 'store', (data, next) => this._kademliaNode._store.put( key, value, next ), cb)
     }
 
     _updateContactFound(contact, cb){
