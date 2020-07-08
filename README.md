@@ -17,3 +17,13 @@ Kademlia has four messages.
 
 ### Implementation
 The reason it is pure JS is to make it low-latency. Promises and Async slow down the requests.
+
+
+### Plugins
+
+1. Sorted Lists. Allows kademlia nodes to store a Sorted List using `Red Black Tree`.
+   
+   This plugins extends Kademlia protocol with:
+   
+    `FIND_SORTED_LIST` — Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
+    

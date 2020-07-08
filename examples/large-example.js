@@ -1,8 +1,6 @@
 const KAD = require('./../index');
 const async = require('async');
 
-const NodeClass = KAD.implementations.KademliaNodeHTTP;
-
 KAD.init({});
 const store = new KAD.StoreMemory();
 
@@ -24,7 +22,9 @@ for (let i=0; i < dataCount; i++)
         value: KAD.helpers.StringUtils.genHexString(40)
     })
 
-const nodes = contacts.map( contact => new NodeClass(contact, store) )
+const nodes = contacts.map( contact => new KAD.KademliaNode(contact, store) )
+nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeHTTP ) )
+
 nodes.map( it => it.start() );
 
 const nodesList = [];

@@ -1,7 +1,7 @@
 const http = require('http');
 const https = require('https');
 const EventEmitter = require('events');
-const {setAsyncInterval, clearAsyncInterval} = require('./../../helpers/async-interval')
+const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
 const uuid = require('uuid').v1;
 
 module.exports = class HTTPServer extends EventEmitter {

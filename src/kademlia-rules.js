@@ -10,6 +10,14 @@ module.exports = class KademliaRules {
         this._kademliaNode = kademliaNode;
         this._store = store;
         this._replicatedStoreToNewNodesAlready = {};
+
+        this._commands = {
+            'PING': this.ping,
+            'STORE': this.store,
+            'FIND_NODE': this.findNode,
+            'FIND_VALUE': this.findValue,
+        }
+
     }
 
     start(){
@@ -32,10 +40,10 @@ module.exports = class KademliaRules {
     }
 
     receive(srcContact, command, data, cb){
-        if (command === 'PING') return this.ping(srcContact, cb);
-        if (command === 'STORE') return this.store(srcContact, data, cb);
-        if (command === 'FIND_NODE') return this.findNode(srcContact, data[0], cb);
-        if (command === 'FIND_VALUE') return this.findValue(srcContact, data[0], cb);
+
+        if (this._commands[command])
+            return this._commands[command].call(this, srcContact, data, cb);
+
         throw "invalid command";
     }
 
@@ -43,7 +51,7 @@ module.exports = class KademliaRules {
      * used to verify that a node is still alive.
      * @param cb
      */
-    ping(srcContact, cb) {
+    ping(srcContact, data, cb) {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
         cb(null, true);
@@ -91,7 +99,7 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findNode( srcContact, key, cb ){
+    findNode( srcContact, [key], cb ){
 
         try{
             if (typeof key === "string")  key = Buffer.from(key, 'hex');
@@ -114,7 +122,7 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findValue(srcContact, key, cb){
+    findValue(srcContact, [key], cb){
 
         try{
             if (typeof key === "string")  key = Buffer.from(key, 'hex');

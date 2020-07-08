@@ -7,8 +7,9 @@ const ContactAddress = require('./src/contact/contact-address')
 
 const RoutingTable = require('./src/routing-table/routing-table')
 
-const KademliaNodeMock = require('./src/implementations/mock/kademlia-node-mock')
-const KademliaNodeHTTP = require('./src/implementations/servers/kademlia-node-http')
+const PluginKademliaNodeMock = require('./src/plugins/node-mock/plugin-node-mock')
+const PluginKademliaNodeHTTP = require('./src/plugins/node-http/plugin-node-http')
+const PluginSortedList = require('./src/plugins/sorted-list/plugin-sorted-list')
 
 const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
@@ -39,9 +40,9 @@ module.exports = {
         Validation,
     },
 
-    implementations:{
-        KademliaNodeMock,
-        KademliaNodeHTTP,
-    }
+    plugins: {
+        PluginKademliaNodeMock,
+        PluginKademliaNodeHTTP,
+    },
 
 }

@@ -1,8 +1,6 @@
 const KAD = require('./../index');
 const async = require('async');
 
-const NodeClass = KAD.implementations.KademliaNodeHTTP;
-
 KAD.init({});
 const store = new KAD.StoreMemory();
 store.start();
@@ -20,7 +18,9 @@ const contacts = [
 ]
 
 //creating kad nodes
-const nodes = contacts.map( contact => new NodeClass(contact, store) )
+const nodes = contacts.map( contact => new KAD.KademliaNode(contact, store) )
+nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeHTTP ) );
+
 nodes.map( it => it.start() );
 
 //encountering

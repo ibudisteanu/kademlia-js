@@ -17,6 +17,13 @@ module.exports = class KademliaNode {
         this._started = false;
     }
 
+    //plugin
+    use(Plugin){
+        if (!Plugin) throw "Invalid plugin";
+
+        new Plugin(this);
+    }
+
     start() {
         if (this._started) throw "Already started";
         this.routingTable.start();
@@ -34,7 +41,7 @@ module.exports = class KademliaNode {
     /**
      * Bootstrap by connecting to other known node in the network.
      */
-    bootstrap(contact, first, cb){
+    bootstrap(contact, first, cb = ()=>{} ){
         if (this.routingTable.map[ contact.identityHex ]) return cb(null, [] ); //already
 
         this.join(contact, first, cb)
@@ -46,7 +53,7 @@ module.exports = class KademliaNode {
      * then refreshes all buckets further than it's closest neighbor, which will
      * be in the occupied bucket with the lowest index
      */
-    join(contact, first = false, cb) {
+    join(contact, first = false, cb = ()=>{} ) {
         this.routingTable.addContact(contact);
 
         this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{

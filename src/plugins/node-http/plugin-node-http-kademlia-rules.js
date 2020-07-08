@@ -1,23 +1,43 @@
-const KademliaRules = require('../../kademlia-rules')
 const Contact = require('../../contact/contact')
 const HTTPServer = require('./http-server')
 const uuid = require('uuid').v1;
 const bencode = require('bencode');
 
-module.exports = class KademliaRulesHTTP extends KademliaRules {
+module.exports = class PluginNodeHTTPKademliaRules {
 
-    constructor(kademliaNode, store) {
-        super(kademliaNode, store);
+    constructor(kademliaRules) {
 
-        this._server = new HTTPServer(kademliaNode, this.receive.bind(this) );
+        kademliaRules._server = new HTTPServer( kademliaRules._kademliaNode, this.receive.bind( kademliaRules) );
+
+        kademliaRules.__startPluginNodeHTTPKademliaRules = kademliaRules.start;
+        kademliaRules.start = this.start;
+
+        kademliaRules.__stopPluginNodeHTTPKademliaRules = kademliaRules.stop;
+        kademliaRules.stop = this.stop;
+
+        kademliaRules.__sendPluginNodeHTTPKademliaRules = kademliaRules.send;
+        kademliaRules.send = this.send;
+
+        kademliaRules.__receivePluginNodeHTTPKademliaRules = kademliaRules.receive;
+        kademliaRules.receive = this.receive;
+
+        kademliaRules.__storePluginNodeHTTPKademliaRules = kademliaRules.store;
+        kademliaRules.store = this.store;
+
+        kademliaRules.__sendStorePluginNodeHTTPKademliaRules = kademliaRules.sendStore;
+        kademliaRules.sendStore = this.sendStore;
+
+        kademliaRules._commands.STORE = this.store.bind(kademliaRules)
 
     }
 
     start(){
+        this.__startPluginNodeHTTPKademliaRules(...arguments);
         this._server.start();
     }
 
     stop(){
+        this.__stopPluginNodeHTTPKademliaRules(...arguments);
         this._server.stop();
     }
 
@@ -59,7 +79,7 @@ module.exports = class KademliaRulesHTTP extends KademliaRules {
 
         decoded[1] = decoded[1].toString()
 
-        super.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
+        this.__receivePluginNodeHTTPKademliaRules( decoded[0], decoded[1], decoded[2], (err, out)=>{
 
             if (err) return cb(err);
 
@@ -78,15 +98,16 @@ module.exports = class KademliaRulesHTTP extends KademliaRules {
     store(srcContact, [key, value], cb) {
         if (Buffer.isBuffer(value))
             value = value.toString();
-        super.store(srcContact, [key, value], cb);
+
+        return this.__storePluginNodeHTTPKademliaRules(srcContact, [key, value], cb);
     }
 
-    sendStore(contact, [key, value], cb){
+    sendStore(srcContact, [key, value], cb){
 
         if ( Buffer.isBuffer(value) )
             value = value.toString();
 
-        super.sendStore(contact, [key, value], cb);
+        return this.__sendStorePluginNodeHTTPKademliaRules(srcContact, [key, value], cb);
     }
 
 }
