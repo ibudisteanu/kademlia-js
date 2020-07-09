@@ -36,12 +36,17 @@ async.each( connections, ( connection, next) =>{
     })
 
     let query2 = KAD.helpers.StringUtils.genHexString(40);
-    nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2', (err, out)=>{
+    nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2_5', 5, (err, out)=>{
         console.log("iterativeStoreSortedListValue", out);
 
-        nodes[5].crawler.iterativeFindValue(query2, (err, out)=>{
-            console.log("iterativeFindSortedList", out);
-        })
+        nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2_2', 2, (err, out)=> {
+            console.log("iterativeStoreSortedListValue", out);
+
+            nodes[5].crawler.iterativeFindSortedList(query2, (err, out)=>{
+                console.log("iterativeFindSortedList", out);
+            })
+
+        });
 
     })
 

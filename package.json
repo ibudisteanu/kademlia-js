@@ -1,5 +1,5 @@
 {
-  "name": "Simple Kademlia",
+  "name": "Simple-Kademlia",
   "scripts": {
     "start": "examples/simple-example.js"
   },

@@ -4,7 +4,7 @@ const Utils = require('./../helpers/utils')
 module.exports = class Store{
 
     constructor(type = "interface") {
-        this._type = "memory";
+        this.type = "memory";
         this._started = false;
     }
 

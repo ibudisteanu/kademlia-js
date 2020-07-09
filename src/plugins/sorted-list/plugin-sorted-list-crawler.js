@@ -24,7 +24,7 @@ module.exports = function PluginSortedListCrawler (crawler) {
     }
 
     function iterativeStoreSortedListValue(key, value, score, cb){
-        return this._iterativeStoreValue( [key, value, score], 'storeSortedListValue', cb)
+        return this._iterativeStoreValue( [key, value, score], 'storeSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( key, value, score, next ), cb)
     }
 
 }

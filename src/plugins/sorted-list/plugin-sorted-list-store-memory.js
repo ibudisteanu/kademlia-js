@@ -41,10 +41,8 @@ module.exports = function (store){
 
             if (foundNode.key !== score){
                 tree.removeNode(foundNode)
-                tree.insert(score, value);
-                this._memorySortedListKeyNodesMap.set(key+':'+value,  )
-            }else {
-                foundNode.value = value;
+                const newNode = tree.insert(score, value);
+                this._memorySortedListKeyNodesMap.set(key+':'+value, newNode )
             }
 
             return cb(null, 1);

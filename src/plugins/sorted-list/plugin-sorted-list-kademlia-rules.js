@@ -5,6 +5,10 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
     kademliaRules._commands.FIND_SORTED_LIST = findSortedList.bind(kademliaRules);
     kademliaRules._commands.STORE_SORTED_LIST_VALUE = storeSortedListValue.bind(kademliaRules);
 
+    kademliaRules.storeSortedListValue = storeSortedListValue;
+    kademliaRules.sendStoreSortedListValue = sendStoreSortedListValue;
+    kademliaRules.findSortedList = findSortedList;
+    kademliaRules.sendFindSortedList = sendFindSortedList;
 
     function storeSortedListValue(srcContact, [key, value, score], cb){
 
@@ -50,7 +54,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.getSortedList(key.toString('hex'), (err, out) => {
+        this._store.getSortedList(key, (err, out) => {
             //found the data
             if (out) cb(null, out )
             else cb( null, this._kademliaNode.routingTable.getClosestToKey(key) )
