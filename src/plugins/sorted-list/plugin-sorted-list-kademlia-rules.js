@@ -1,16 +1,12 @@
 const Validation = require('./../../helpers/validation')
 
-module.exports = class SortedListKademliaRules {
+module.exports = function SortedListKademliaRules (kademliaRules) {
 
-    constructor(kademliaRules) {
-
-        kademliaRules._commands.FIND_SORTED_LIST = this.findSortedList.bind(kademliaRules);
-        kademliaRules._commands.STORE_SORTED_LIST_VALUE = this.storeSortedListValue.bind(kademliaRules);
-
-    }
+    kademliaRules._commands.FIND_SORTED_LIST = findSortedList.bind(kademliaRules);
+    kademliaRules._commands.STORE_SORTED_LIST_VALUE = storeSortedListValue.bind(kademliaRules);
 
 
-    storeSortedListValue(srcContact, [key, value, score], cb){
+    function storeSortedListValue(srcContact, [key, value, score], cb){
 
         try{
             if (typeof key === "string")  key = Buffer.from(key, 'hex');
@@ -25,7 +21,7 @@ module.exports = class SortedListKademliaRules {
 
     }
 
-    sendStoreSortedListValue(contact, [key, value, score], cb){
+    function sendStoreSortedListValue(contact, [key, value, score], cb){
 
         try{
             if (typeof key === "string")  key = Buffer.from(key, 'hex');
@@ -43,7 +39,7 @@ module.exports = class SortedListKademliaRules {
      * @param key
      * @param cb
      */
-    findSortedList(srcContact, [key], cb){
+    function findSortedList(srcContact, [key], cb){
 
         try{
             if (typeof key === "string")  key = Buffer.from(key, 'hex');
@@ -62,7 +58,7 @@ module.exports = class SortedListKademliaRules {
 
     }
 
-    sendFindSortedList(contact, key, cb){
+    function sendFindSortedList(contact, key, cb){
         this.send(contact, 'FIND_SORTED_LIST', [key], cb);
     }
 

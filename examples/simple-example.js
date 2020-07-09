@@ -19,7 +19,7 @@ const contacts = [
 
 //creating kad nodes
 const nodes = contacts.map( contact => new KAD.KademliaNode(contact, store) )
-nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeHTTP ) );
+nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeMock ) );
 
 nodes.map( it => it.start() );
 

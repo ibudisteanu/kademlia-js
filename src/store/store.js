@@ -1,4 +1,3 @@
-const NextTick = require('./../helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('./../helpers/async-interval')
 const Utils = require('./../helpers/utils')
 
@@ -52,6 +51,12 @@ module.exports = class Store{
     delExpiration(key, cb){
     }
 
+    //plugin
+    use(plugin){
+        if (!plugin || typeof plugin !== "function" ) throw "Invalid plugin";
+        plugin(this);
+    }
+
     _expireOldKeys(next){
 
         if (!this._expireOldKeysIterator)
@@ -62,7 +67,7 @@ module.exports = class Store{
             const time = itValue.value[1];
             if (time < Date.now() ){
                 const key = itValue.value[0].splice(0, itValue[0].length-4 );
-                this.del(key, next, gobal.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR_SLEEP )
+                this.del(key, next )
             }
         } else {
             delete this._expireOldKeysIterator;
@@ -70,6 +75,7 @@ module.exports = class Store{
         }
 
     }
+
 
 
 }

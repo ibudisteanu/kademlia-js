@@ -18,10 +18,10 @@ module.exports = class KademliaNode {
     }
 
     //plugin
-    use(Plugin){
-        if (!Plugin) throw "Invalid plugin";
+    use(plugin){
 
-        new Plugin(this);
+        if (!plugin || typeof plugin !== "function" ) throw "Invalid plugin";
+        plugin(this);
     }
 
     start() {

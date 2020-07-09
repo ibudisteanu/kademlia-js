@@ -1,34 +1,31 @@
 const MOCKUP_SEND_ERROR_FREQUENCY = 0.001;
 
-module.exports = class PluginNodeMockKademliaRules {
+module.exports = function PluginNodeMockKademliaRules(kademliaRules) {
 
-    constructor(kademliaRules) {
+    const _start = kademliaRules.start.bind(kademliaRules);
+    kademliaRules.start = start;
 
-        kademliaRules.__startPluginNodeMockKademliaRules = kademliaRules.start;
-        kademliaRules.start = this.start;
+    const _stop = kademliaRules.stop.bind(kademliaRules);
+    kademliaRules.stop = stop;
 
-        kademliaRules.__stopPluginNodeMockKademliaRules = kademliaRules.stop;
-        kademliaRules.stop = this.stop;
+    const _send = kademliaRules.send.bind(kademliaRules);
+    kademliaRules.send = send;
 
-        kademliaRules.__sendPluginNodeMockKademliaRules = kademliaRules.send;
-        kademliaRules.send = this.send;
-    }
+    function start() {
 
-    start() {
-
-        this.__startPluginNodeMockKademliaRules(...arguments);
+        _start(...arguments);
 
         if (!global.KAD_MOCKUP) global.KAD_MOCKUP = {};
         global.KAD_MOCKUP[this._kademliaNode.contact.address.hostname+':'+this._kademliaNode.contact.address.port] = this;
 
     }
 
-    stop(){
-        this.__stopPluginNodeMockKademliaRules.stop(...arguments);
+    function stop(){
+        _stop(...arguments);
         delete global.KAD_MOCKUP[this._kademliaNode.contact.identityHex];
     }
 
-    send(destContact, command, data, cb){
+    function send(destContact, command, data, cb){
         //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
             console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.address.hostname, destContact.address.port );

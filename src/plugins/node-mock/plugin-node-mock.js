@@ -1,9 +1,7 @@
 const PluginNodeMockKademliaRules = require('./plugin-node-mock-kademlia-rules')
 
-module.exports = class PluginNodeMock {
+module.exports = function PluginNodeMock(kademliaNode) {
 
-    constructor(kademliaNode) {
-        new PluginNodeMockKademliaRules(kademliaNode.rules);
-    }
+    PluginNodeMockKademliaRules(kademliaNode.rules);
 
 }

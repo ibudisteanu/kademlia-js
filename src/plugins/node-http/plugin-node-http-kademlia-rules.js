@@ -3,45 +3,41 @@ const HTTPServer = require('./http-server')
 const uuid = require('uuid').v1;
 const bencode = require('bencode');
 
-module.exports = class PluginNodeHTTPKademliaRules {
+module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
 
-    constructor(kademliaRules) {
+    kademliaRules._server = new HTTPServer( kademliaRules._kademliaNode, receive.bind( kademliaRules) );
 
-        kademliaRules._server = new HTTPServer( kademliaRules._kademliaNode, this.receive.bind( kademliaRules) );
+    const _start = kademliaRules.start.bind(kademliaRules);
+    kademliaRules.start = start;
 
-        kademliaRules.__startPluginNodeHTTPKademliaRules = kademliaRules.start;
-        kademliaRules.start = this.start;
+    const _stop = kademliaRules.stop.bind(kademliaRules);
+    kademliaRules.stop = stop;
 
-        kademliaRules.__stopPluginNodeHTTPKademliaRules = kademliaRules.stop;
-        kademliaRules.stop = this.stop;
+    const _send = kademliaRules.send.bind(kademliaRules);
+    kademliaRules.send = send;
 
-        kademliaRules.__sendPluginNodeHTTPKademliaRules = kademliaRules.send;
-        kademliaRules.send = this.send;
+    const _receive = kademliaRules.receive.bind(kademliaRules);
+    kademliaRules.receive = receive;
 
-        kademliaRules.__receivePluginNodeHTTPKademliaRules = kademliaRules.receive;
-        kademliaRules.receive = this.receive;
+    const _store = kademliaRules.store.bind(kademliaRules);
+    kademliaRules.store = store;
 
-        kademliaRules.__storePluginNodeHTTPKademliaRules = kademliaRules.store;
-        kademliaRules.store = this.store;
+    const _sendStore = kademliaRules.sendStore.bind(kademliaRules);
+    kademliaRules.sendStore = sendStore;
 
-        kademliaRules.__sendStorePluginNodeHTTPKademliaRules = kademliaRules.sendStore;
-        kademliaRules.sendStore = this.sendStore;
+    kademliaRules._commands.STORE = store.bind(kademliaRules)
 
-        kademliaRules._commands.STORE = this.store.bind(kademliaRules)
-
-    }
-
-    start(){
-        this.__startPluginNodeHTTPKademliaRules(...arguments);
+    function start(){
+        _start(...arguments);
         this._server.start();
     }
 
-    stop(){
-        this.__stopPluginNodeHTTPKademliaRules(...arguments);
+    function stop(){
+        _stop(...arguments);
         this._server.stop();
     }
 
-    send(destContact, command, data, cb){
+    function send(destContact, command, data, cb){
 
         const id = uuid();
 
@@ -68,7 +64,7 @@ module.exports = class PluginNodeHTTPKademliaRules {
 
     }
 
-    receive( buffer, cb){
+    function receive( buffer, cb){
 
         const decoded = bencode.decode(buffer);
         if (!decoded)
@@ -79,7 +75,7 @@ module.exports = class PluginNodeHTTPKademliaRules {
 
         decoded[1] = decoded[1].toString()
 
-        this.__receivePluginNodeHTTPKademliaRules( decoded[0], decoded[1], decoded[2], (err, out)=>{
+        _receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
 
             if (err) return cb(err);
 
@@ -95,19 +91,19 @@ module.exports = class PluginNodeHTTPKademliaRules {
 
     }
 
-    store(srcContact, [key, value], cb) {
+    function store(srcContact, [key, value], cb) {
         if (Buffer.isBuffer(value))
             value = value.toString();
 
-        return this.__storePluginNodeHTTPKademliaRules(srcContact, [key, value], cb);
+        return _store(srcContact, [key, value], cb);
     }
 
-    sendStore(srcContact, [key, value], cb){
+    function sendStore(srcContact, [key, value], cb){
 
         if ( Buffer.isBuffer(value) )
             value = value.toString();
 
-        return this.__sendStorePluginNodeHTTPKademliaRules(srcContact, [key, value], cb);
+        return _sendStore(srcContact, [key, value], cb);
     }
 
 }

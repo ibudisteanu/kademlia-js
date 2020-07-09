@@ -1,13 +1,11 @@
 const Validation = require('./../../helpers/validation')
 
-module.exports = class PluginSortedListCrawler {
+module.exports = function PluginSortedListCrawler (crawler) {
 
-    constructor(crawler) {
-        crawler.iterativeFindSortedList  = this.iterativeFindSortedList;
-        crawler.iterativeStoreSortedListValue  = this.iterativeStoreSortedListValue;
-    }
+    crawler.iterativeFindSortedList  = this.iterativeFindSortedList;
+    crawler.iterativeStoreSortedListValue  = this.iterativeStoreSortedListValue;
 
-    iterativeFindSortedList(key, cb){
+    function iterativeFindSortedList(key, cb){
 
         try{
             if (typeof key === "string") key = Buffer.from(key, "hex");
@@ -25,7 +23,7 @@ module.exports = class PluginSortedListCrawler {
 
     }
 
-    iterativeStoreSortedListValue(key, value, score, cb){
+    function iterativeStoreSortedListValue(key, value, score, cb){
         return this._iterativeStoreValue( [key, value, score], 'storeSortedListValue', cb)
     }
 

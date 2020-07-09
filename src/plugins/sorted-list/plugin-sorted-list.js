@@ -1,11 +1,11 @@
 const PluginSortedListKademliaRules = require('./plugin-sorted-list-kademlia-rules')
 const PluginSortedListCrawler = require('./plugin-sorted-list-crawler')
+const PluginSortedListStore = require('./plugin-sorted-list-store')
 
-module.exports = class SortedListPlugin {
+module.exports = function SortedListPlugin(kademliaNode) {
 
-    constructor(kademliaNode) {
-        new PluginSortedListKademliaRules( kademliaNode.rules );
-        new PluginSortedListCrawler( kademliaNode.crawler );
-    }
+    PluginSortedListKademliaRules( kademliaNode.rules );
+    PluginSortedListCrawler( kademliaNode.crawler );
+    PluginSortedListStore( kademliaNode._store );
 
 }
