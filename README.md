@@ -27,4 +27,5 @@ The reason it is pure JS is to make it low-latency. Promises and Async slow down
    
     `STORE_SORTED_VALUE` - Stores a (key, value, score) pair in one node.
     `FIND_SORTED_LIST` — Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding stored_list.
-    
+        
+npm link red-black-tree-js

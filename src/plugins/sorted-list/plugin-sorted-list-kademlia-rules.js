@@ -17,7 +17,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.putSorted(key.toString('hex'), value, score, cb);
+        this._store.putSortedList(key.toString('hex'), value, score, cb);
 
     }
 
@@ -50,7 +50,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.get(key.toString('hex'), (err, out) => {
+        this._store.getSortedList(key.toString('hex'), (err, out) => {
             //found the data
             if (out) cb(null, out )
             else cb( null, this._kademliaNode.routingTable.getClosestToKey(key) )

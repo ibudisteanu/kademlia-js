@@ -2,8 +2,8 @@ const Validation = require('./../../helpers/validation')
 
 module.exports = function PluginSortedListCrawler (crawler) {
 
-    crawler.iterativeFindSortedList  = this.iterativeFindSortedList;
-    crawler.iterativeStoreSortedListValue  = this.iterativeStoreSortedListValue;
+    crawler.iterativeFindSortedList  = iterativeFindSortedList;
+    crawler.iterativeStoreSortedListValue  = iterativeStoreSortedListValue;
 
     function iterativeFindSortedList(key, cb){
 
@@ -14,7 +14,7 @@ module.exports = function PluginSortedListCrawler (crawler) {
             return cb(err);
         }
 
-        this._kademliaNode._store.get(key, (err, out)=>{
+        this._kademliaNode._store.getSortedList(key, (err, out)=>{
 
             if (out) return cb(null, out);
             this._iterativeFind('FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', key, cb);

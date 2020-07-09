@@ -4,7 +4,7 @@ const Validation = require ('./../helpers/validation')
 module.exports = class StoreMemory extends Store{
 
     constructor() {
-        super();
+        super("memory");
         this._memory = new Map();
         this._memoryExpiration = new Map();
     }
@@ -47,29 +47,35 @@ module.exports = class StoreMemory extends Store{
             this._memory.delete(key);
             this._delExpiration(key);
             this.delExpiration(key, ()=>{
-                cb(null, true)
+                cb(null, 1)
             })
         } else
-            cb(null, false);
+            cb(null, 0);
     }
 
 
     _getExpiration(key, cb){
+        if (Buffer.isBuffer(key)) key = key.toString('hex');
+
         cb( null, this._memoryExpiration.get(key+':exp') );
     }
 
     _putExpiration(key, time, cb){
+        if (Buffer.isBuffer(key)) key = key.toString('hex');
+
         this._memoryExpiration.set(key+':exp', time);
         cb(null, 1);
     }
 
     _delExpiration(key, cb){
 
+        if (Buffer.isBuffer(key)) key = key.toString('hex');
+
         if (this._memory.get(key)) {
             this._memoryExpiration.delete(key + ':exp');
-            cb(null, true)
+            cb(null, 1)
         } else
-            cb(null, false);
+            cb(null, 0);
     }
 
 }

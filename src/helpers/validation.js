@@ -29,3 +29,6 @@ module.exports.validateStoreData = (data) => {
     if (typeof data !== 'string' || data.length === 0) throw "data is invalid";
 }
 
+module.exports.validateStoreScore = ( data ) => {
+    if (typeof data !== 'number' || data <= -Number.MAX_SAFE_INTEGER || data >= Number.MAX_SAFE_INTEGER ) throw "data is invalid";
+}

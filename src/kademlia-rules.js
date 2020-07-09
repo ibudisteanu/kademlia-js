@@ -79,7 +79,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.put(key.toString('hex'), value, cb);
+        this._store.put(key, value, cb);
     }
 
     sendStore(contact, [key, value], cb){
@@ -133,7 +133,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.get(key.toString('hex'), (err, out) => {
+        this._store.get(key, (err, out) => {
             //found the data
             if (out) cb(null, out )
             else cb( null, this._kademliaNode.routingTable.getClosestToKey(key) )
