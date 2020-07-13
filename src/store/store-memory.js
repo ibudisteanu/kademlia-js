@@ -29,7 +29,7 @@ module.exports = class StoreMemory extends Store{
         if (Buffer.isBuffer(key)) key = key.toString('hex');
 
         Validation.validateStoreKey(key);
-        Validation.validateStoreData(value)
+        Validation.validateStoreData(value);
 
         this._memory.set( key, value );
         this._putExpiration(key, Date.now() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
@@ -43,35 +43,29 @@ module.exports = class StoreMemory extends Store{
         if (Buffer.isBuffer(key)) key = key.toString('hex');
         Validation.validateStoreKey(key);
 
-        if (this._memory.get(key)) {
+        if (!this._memory.get(key))
+            return cb(null, 0);
+        else {
             this._memory.delete(key);
-            this._delExpiration(key);
-            this.delExpiration(key, ()=>{
+            this._delExpiration(key, ()=>{
                 cb(null, 1)
             })
-        } else
-            cb(null, 0);
+        }
     }
 
 
     _getExpiration(key, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-
         cb( null, this._memoryExpiration.get(key+':exp') );
     }
 
     _putExpiration(key, time, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-
         this._memoryExpiration.set(key+':exp', time);
         cb(null, 1);
     }
 
     _delExpiration(key, cb){
 
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-
-        if (this._memory.get(key)) {
+        if (this._memoryExpiration.get(key)) {
             this._memoryExpiration.delete(key + ':exp');
             cb(null, 1)
         } else
