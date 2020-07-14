@@ -2,8 +2,6 @@ const KAD = require('./../index');
 const async = require('async');
 
 KAD.init({});
-const store = new KAD.StoreMemory();
-
 console.log("Large KAD");
 
 const nodesCount = 1000;
@@ -22,7 +20,11 @@ for (let i=0; i < dataCount; i++)
         value: KAD.helpers.StringUtils.genHexString(40)
     })
 
-const nodes = contacts.map( contact => new KAD.KademliaNode(contact, store) )
+function newStore(){
+    return new KAD.StoreMemory();
+}
+
+const nodes = contacts.map( contact => new KAD.KademliaNode(contact, newStore() ) )
 nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeHTTP ) )
 
 nodes.map( it => it.start() );

@@ -1,8 +1,9 @@
 {
-  "name": "Simple-Kademlia",
+  "name": "simple-kademlia",
   "scripts": {
     "start": "examples/simple-example.js"
   },
+  "main": "src/index",
   "dependencies": {
     "async": "^3.2.0",
     "bencode": "^2.0.1",

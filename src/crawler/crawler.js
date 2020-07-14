@@ -1,6 +1,7 @@
 const async = require('async');
 const Validation = require('../helpers/validation')
 const ContactList = require('./contact-list')
+const Contact = require('./../contact/contact')
 
 module.exports = class Crawler {
 
@@ -102,8 +103,11 @@ module.exports = class Crawler {
                 // mark this node as active to include it in any return values
                 shortlist.responded(contact);
 
+                if (!result || (Array.isArray(result) && !result.length)) {
+                    next(null, result);
+                } else
                 //If the result is a contact/node list, just keep track of it
-                if ( Array.isArray(result) || method !== 'FIND_VALUE' || method !== 'FIND_SORTED_LIST' ){
+                if ( Array.isArray(result) && result.length && result[0] instanceof Contact ){
                     const added = shortlist.add(result);
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
                     added.forEach(contact => this._updateContactFound(contact, () => null ));
@@ -114,8 +118,9 @@ module.exports = class Crawler {
                     //who is missing the value and store a copy with them
                     const closestMissingValue = shortlist.active[0];
 
-                    if (closestMissingValue)
-                        this._kademliaNode.rules.send(closestMissingValue, methodStore, [key, result ], () => null );
+                    if (closestMissingValue) {
+                        this._kademliaNode.rules.send(closestMissingValue, methodStore, [key, result], () => null);
+                    }
 
                     //  we found a value, so stop searching
                     finished = true;

@@ -2,8 +2,6 @@ const KAD = require('./../index');
 const async = require('async');
 
 KAD.init({});
-const store = new KAD.StoreMemory();
-store.start();
 
 console.log("Simple KAD");
 
@@ -17,8 +15,12 @@ const contacts = [
     new KAD.Contact(Buffer.from('7413070eb4508d12076235536856913fcf880522', 'hex'), new KAD.ContactAddress('http','127.0.0.6', 8005, '' )),
 ]
 
+function newStore(){
+    return new KAD.StoreMemory();
+}
+
 //creating kad nodes
-const nodes = contacts.map( contact => new KAD.KademliaNode(contact, store) )
+const nodes = contacts.map( contact => new KAD.KademliaNode(contact, newStore) )
 nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeMock ) );
 
 nodes.map( it => it.start() );
