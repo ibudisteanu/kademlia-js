@@ -39,12 +39,18 @@ async.each( connections, ( connection, next) =>{
     nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2_5', 5, (err, out)=>{
         console.log("iterativeStoreSortedListValue", out);
 
-        nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2_2', 2, (err, out)=> {
+        nodes[1].crawler.iterativeStoreSortedListValue(query2, 'query2_2', 2, (err, out)=> {
             console.log("iterativeStoreSortedListValue", out);
 
-            nodes[5].crawler.iterativeFindSortedList(query2, (err, out)=>{
-                console.log("iterativeFindSortedList", out);
-            })
+            nodes[4].crawler.iterativeStoreSortedListValue(query2, 'query2_8', 8, (err, out)=> {
+                console.log("iterativeStoreSortedListValue", out);
+
+                nodes[5].crawler.iterativeFindSortedList(query2, (err, out)=>{
+                    console.log("iterativeFindSortedList", out);
+                })
+
+            });
+
 
         });
 
