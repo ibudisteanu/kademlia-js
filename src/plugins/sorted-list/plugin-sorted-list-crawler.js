@@ -5,6 +5,7 @@ module.exports = function PluginSortedListCrawler (crawler) {
     crawler.iterativeFindSortedList  = iterativeFindSortedList;
     crawler.iterativeStoreSortedListValue  = iterativeStoreSortedListValue;
 
+
     function iterativeFindSortedList(key, cb){
 
         try{
@@ -26,5 +27,7 @@ module.exports = function PluginSortedListCrawler (crawler) {
     function iterativeStoreSortedListValue(key, value, score, cb){
         return this._iterativeStoreValue( [key, value, score], 'storeSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( key, value, score, next ), cb)
     }
+
+
 
 }

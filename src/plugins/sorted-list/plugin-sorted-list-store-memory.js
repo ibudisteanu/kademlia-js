@@ -34,7 +34,7 @@ module.exports = function (store){
 
         const tree = this._memorySortedList.get(key);
         if (tree)
-            cb( null, tree.toSortedArray() );
+            cb( null, tree.toSortedArray('getValueKeyArray') );
         else
             cb( null, undefined );
     }

@@ -80,6 +80,14 @@ module.exports = class Crawler {
 
     }
 
+    _sendStoreMissingKey(closestMissingValue, methodStore, key, data, cb ){
+        let out;
+        if (Array.isArray(data)) out = [key, ...data]
+        else out = [key, data];
+
+        this._kademliaNode.rules.send(closestMissingValue, methodStore, out, cb);
+    }
+
     _iterativeFind(method, methodStore, key, cb){
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
@@ -119,7 +127,14 @@ module.exports = class Crawler {
                     const closestMissingValue = shortlist.active[0];
 
                     if (closestMissingValue) {
-                        this._kademliaNode.rules.send(closestMissingValue, methodStore, [key, result], () => null);
+                        if (Array.isArray){
+
+                            async.eachLimit(result, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+                                ( data, next ) => this._sendStoreMissingKey(closestMissingValue, methodStore, key, data, next ),
+                                ()=>{});
+
+                        } else
+                        return this._sendStoreMissingKey(closestMissingValue, methodStore, key, result, cb);
                     }
 
                     //  we found a value, so stop searching

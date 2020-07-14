@@ -20,7 +20,7 @@ function newStore(){
 }
 
 //creating kad nodes
-const nodes = contacts.map( contact => new KAD.KademliaNode(contact, newStore) )
+const nodes = contacts.map( contact => new KAD.KademliaNode(contact, newStore() ) )
 nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeMock ) );
 
 nodes.map( it => it.start() );
@@ -47,3 +47,5 @@ async.each( connections, ( connection, next) =>{
     })
 
 });
+
+global.NODES = nodes;
