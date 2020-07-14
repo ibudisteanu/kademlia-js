@@ -83,10 +83,13 @@ module.exports = function (store){
         const tree = this._memorySortedList.get(key);
         tree.removeNode(foundNode);
 
+        if ( tree.isEmpty )
+            this._memorySortedList.delete( key );
+
         this._memorySortedListKeyNodesMap.delete(key+':'+value);
         this._delExpirationSortedList(key+':'+value, ()=>{
             cb(null, 1)
-        })
+        });
     }
 
 
