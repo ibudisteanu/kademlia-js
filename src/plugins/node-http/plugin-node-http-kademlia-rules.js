@@ -37,26 +37,50 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
         this._server.stop();
     }
 
+    function encodeData(data, level = 0){
+
+        if (data instanceof Contact)
+            data = data.toArray();
+        else
+        if (!Buffer.isBuffer(data) && typeof data === "object"){
+            for (const key in data)
+                data[key] = encodeData(data[key], level+1);
+        }
+
+        if (level === 0)
+            return bencode.encode(data);
+        else
+            return data;
+
+    }
+
     function send(destContact, command, data, cb){
 
         const id = uuid();
 
-        const buffer = bencode.encode([ this._kademliaNode.contact.toArray(), command, data])
+        const buffer = encodeData([ this._kademliaNode.contact, command, data ])
         this._server.write( id, destContact, buffer, (err, out)=>{
 
             if (err) cb(err);
 
             const decoded = bencode.decode(out);
 
-            if (command === 'FIND_VALUE')
-                if ( Buffer.isBuffer(decoded) )
-                    return cb(null, decoded.toString() )
+            if (command === 'FIND_VALUE' || command === 'FIND_SORTED_LIST' || command === 'FIND_NODE'  ){
 
-            if (command === 'FIND_VALUE' || command === 'FIND_NODE' ){
-                const array = [];
-                for (let i=0; i < decoded.length; i++)
-                    array[i] = Contact.fromArray(decoded[i]);
-                return cb(null, array );
+                if (command === 'FIND_VALUE' && decoded[0] === 1 ){
+                    decoded[1] = decoded[1].toString();
+                    return cb(null, decoded )
+                } else
+                if (command === 'FIND_SORTED_LIST' && decoded[0] === 1){
+                    for (let i=0; i < decoded[1].length; i++)
+                        decoded[1][i] = decoded[1][i].toString();
+
+                    return cb(null, decoded);
+                } else {
+                    for (let i = 0; i < decoded[1].length; i++)
+                        decoded[1][i] = Contact.fromArray(decoded[1][i]);
+                    return cb(null, decoded);
+                }
             }
 
             cb(null, decoded);
@@ -84,7 +108,7 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
                     if (out[i] instanceof Contact)
                         out[i] = out[i].toArray();
 
-            const buffer = bencode.encode(out);
+            const buffer = encodeData(out);
             cb(null, buffer);
 
         });

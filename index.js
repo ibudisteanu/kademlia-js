@@ -14,6 +14,7 @@ const PluginSortedList = require('./src/plugins/sorted-list/plugin-sorted-list')
 const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
 const Validation = require('./src/helpers/validation')
+const AsyncInterval = require('./src/helpers/async-interval')
 
 const async = require('async');
 const bencode = require('bencode');
@@ -41,6 +42,7 @@ module.exports = {
         BufferUtils,
         StringUtils,
         Validation,
+        AsyncInterval,
     },
 
     plugins: {

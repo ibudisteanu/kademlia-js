@@ -115,11 +115,11 @@ module.exports = class Crawler {
                     next(null, result);
                 } else
                 //If the result is a contact/node list, just keep track of it
-                if ( Array.isArray(result) && result.length && result[0] instanceof Contact ){
-                    const added = shortlist.add(result);
+                if ( result[0] === 0 ){
+                    const added = shortlist.add( result[1] );
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
                     added.forEach(contact => this._updateContactFound(contact, () => null ));
-                    next(null, result);
+                    next(null,  result[1]);
                 } else {
 
                     //If we did get an item back, get the closest node we contacted
@@ -129,18 +129,18 @@ module.exports = class Crawler {
                     if (closestMissingValue) {
                         if (Array.isArray){
 
-                            async.eachLimit(result, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+                            async.eachLimit(result[1], global.KAD_OPTIONS.ALPHA_CONCURRENCY,
                                 ( data, next ) => this._sendStoreMissingKey(closestMissingValue, methodStore, key, data, next ),
                                 ()=>{});
 
                         } else
-                        return this._sendStoreMissingKey(closestMissingValue, methodStore, key, result, cb);
+                        return this._sendStoreMissingKey(closestMissingValue, methodStore, key,  result[1], cb);
                     }
 
                     //  we found a value, so stop searching
                     finished = true;
-                    cb(null, { result, contact });
-                    next(null, result);
+                    cb(null, {  result: result[1], contact });
+                    next(null,  result[1] );
                 }
 
             })

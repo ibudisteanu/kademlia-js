@@ -110,7 +110,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        cb( null, this._kademliaNode.routingTable.getClosestToKey(key) );
+        cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] );
     }
 
     sendFindNode(contact, key, cb){
@@ -135,8 +135,8 @@ module.exports = class KademliaRules {
 
         this._store.get(key, (err, out) => {
             //found the data
-            if (out) cb(null, out )
-            else cb( null, this._kademliaNode.routingTable.getClosestToKey(key) )
+            if (out) cb(null, [1, out] )
+            else cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] )
         })
 
     }

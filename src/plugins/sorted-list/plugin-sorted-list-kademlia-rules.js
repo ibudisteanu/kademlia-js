@@ -56,8 +56,8 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
         this._store.getSortedList(key, (err, out) => {
             //found the data
-            if (out) cb(null, out )
-            else cb( null, this._kademliaNode.routingTable.getClosestToKey(key) )
+            if (out) cb(null, [ 1, out ] )
+            else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(key) ] )
         })
 
     }
