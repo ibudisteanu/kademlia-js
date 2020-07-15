@@ -7,12 +7,12 @@ console.log("Simple KAD");
 
 //addresses
 const contacts = [
-    new KAD.Contact(Buffer.from('188d2ad1ce11d8415bce465726e9ab3f776b2d2d', 'hex'), new KAD.ContactAddress('http','127.0.0.1', 8000, '',)),
-    new KAD.Contact(Buffer.from('bcd21f3ff1248430e52984940884f03c47922624', 'hex'), new KAD.ContactAddress('http','127.0.0.2', 8001, '',)),
-    new KAD.Contact(Buffer.from('e4f39051aa48aafab44edaee521a19f1c0c34455', 'hex'), new KAD.ContactAddress('http','127.0.0.3', 8002, '',)),
-    new KAD.Contact(Buffer.from('a14c02004daca7dd2f43ecade3bfefbe47d9b8b5', 'hex'), new KAD.ContactAddress('http','127.0.0.4', 8003, '' )),
-    new KAD.Contact(Buffer.from('eabea99bcdca93e19889b5ee4dce399df0938086', 'hex'), new KAD.ContactAddress('http','127.0.0.5', 8004, '' )),
-    new KAD.Contact(Buffer.from('7413070eb4508d12076235536856913fcf880522', 'hex'), new KAD.ContactAddress('http','127.0.0.6', 8005, '' )),
+    new KAD.Contact(Buffer.from('e055e2c4526e496050c39f0a6cb5c3a2c367d9b3831dd65ea423927903f6b9b2', 'hex'), new KAD.ContactAddress('http','127.0.0.1', 8000, '',)),
+    new KAD.Contact(Buffer.from('909b9194acca9d309e7557e228f0d82dd9e05fcd4e02d0354a8ccb83649d001f', 'hex'), new KAD.ContactAddress('http','127.0.0.2', 8001, '',)),
+    new KAD.Contact(Buffer.from('6680ee39806e5c86c3329c39b1b70f5d1e074b7fc5eda8bd6b64bb725b20b3fe', 'hex'), new KAD.ContactAddress('http','127.0.0.3', 8002, '',)),
+    new KAD.Contact(Buffer.from('55a0f68d2de071171d9e0bb5373e5cc89a4a78b3a313f2e818029d59745364b6', 'hex'), new KAD.ContactAddress('http','127.0.0.4', 8003, '' )),
+    new KAD.Contact(Buffer.from('b3e6ce9aa1735d9811e23b3d67ff91db0c0e911fc54f1f7d58f58a6ef4de748d', 'hex'), new KAD.ContactAddress('http','127.0.0.5', 8004, '' )),
+    new KAD.Contact(Buffer.from('278e85ae39e1b36a508c5e2994177fc60f37a9d78e2bf21169d75fcee62547cd', 'hex'), new KAD.ContactAddress('http','127.0.0.6', 8005, '' )),
 ]
 
 function newStore(){
@@ -32,12 +32,12 @@ async.each( connections, ( connection, next) =>{
     nodes[connection[0]].bootstrap( contacts[ connection[1] ], false, next );
 }, (err, out)=> {
 
-    let query = KAD.helpers.StringUtils.genHexString(40);
+    let query = KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2);
     nodes[4].crawler.iterativeFindSortedList(query, (err, out)=>{
         console.log("iterativeFindSortedList", out);
     })
 
-    let query2 = KAD.helpers.StringUtils.genHexString(40);
+    let query2 = KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2 );
     nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2_5', 5, (err, out)=>{
         console.log("iterativeStoreSortedListValue", out);
 

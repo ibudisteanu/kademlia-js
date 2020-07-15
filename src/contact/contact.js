@@ -1,5 +1,6 @@
 const Validation = require('./../helpers/validation')
 const ContactAddress = require('./contact-address')
+const StringUtils = require('./../helpers/string-utils')
 
 module.exports = class Contact{
 
@@ -26,4 +27,10 @@ module.exports = class Contact{
     static fromArray(arr){
         return new Contact( arr[0], ContactAddress.fromArray( arr, 1 ) );
     }
+
+    static createNewContact(address){
+        const identity = Buffer.from( StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH));
+        return new Contact(identity, address);
+    }
+
 }

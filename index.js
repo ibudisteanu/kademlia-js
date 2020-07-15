@@ -15,6 +15,9 @@ const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
 const Validation = require('./src/helpers/validation')
 
+const async = require('async');
+const bencode = require('bencode');
+
 module.exports = {
 
     init(config ={} ) {
@@ -45,5 +48,10 @@ module.exports = {
         PluginKademliaNodeHTTP,
         PluginSortedList,
     },
+
+    library: {
+        async,
+        bencode,
+    }
 
 }

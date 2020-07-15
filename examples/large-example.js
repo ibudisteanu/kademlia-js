@@ -11,13 +11,13 @@ const dataCount = 100;
 //addresses
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
-    contacts.push( new KAD.Contact( Buffer.from( KAD.helpers.StringUtils.genHexString(40), 'hex'),  new KAD.ContactAddress('http', '127.0.0.1', 10000 + i, '' )),)
+    contacts.push( new KAD.Contact( Buffer.from( KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2 ), 'hex'),  new KAD.ContactAddress('http', '127.0.0.1', 10000 + i, '' )),)
 
 const files = [];
 for (let i=0; i < dataCount; i++)
     files.push({
-        key: KAD.helpers.StringUtils.genHexString(40),
-        value: KAD.helpers.StringUtils.genHexString(40)
+        key: KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2),
+        value: KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2)
     })
 
 function newStore(){
