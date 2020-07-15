@@ -73,7 +73,7 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
                 } else
                 if (command === 'FIND_SORTED_LIST' && decoded[0] === 1){
                     for (let i=0; i < decoded[1].length; i++)
-                        decoded[1][i] = decoded[1][i].toString();
+                        decoded[1][i][0] = decoded[1][i][0].toString();
 
                     return cb(null, decoded);
                 } else {

@@ -40,7 +40,9 @@ module.exports = function (store){
     }
 
     function putSortedList(key, value, score, cb){
+        
         if (Buffer.isBuffer(key)) key = key.toString('hex');
+        if (Buffer.isBuffer(value)) value = value.toString('hex');
 
         Validation.validateStoreKey(key);
         Validation.validateStoreData(value);
