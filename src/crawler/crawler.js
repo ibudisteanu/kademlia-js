@@ -127,14 +127,14 @@ module.exports = class Crawler {
                     const closestMissingValue = shortlist.active[0];
 
                     if (closestMissingValue) {
-                        if (Array.isArray){
+                        if (Array.isArray(result[1])){
 
                             async.eachLimit(result[1], global.KAD_OPTIONS.ALPHA_CONCURRENCY,
                                 ( data, next ) => this._sendStoreMissingKey(closestMissingValue, methodStore, key, data, next ),
                                 ()=>{});
 
                         } else
-                        return this._sendStoreMissingKey(closestMissingValue, methodStore, key,  result[1], cb);
+                        this._sendStoreMissingKey(closestMissingValue, methodStore, key,  result[1], ()=>{});
                     }
 
                     //  we found a value, so stop searching
