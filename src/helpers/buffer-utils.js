@@ -1,4 +1,5 @@
 const Validation = require('./validation')
+const { randomBytes } = require('crypto');
 
 function getPowerOfTwoBufferForIndex(referenceKey, exp) {
     if (exp < 0 || exp >= global.KAD_OPTIONS.BUCKETS_COUNT_B) throw 'Index out of range';
@@ -70,5 +71,10 @@ module.exports = {
 
         return base;
     },
+
+    genBuffer(len) {
+        return  randomBytes(len);
+    }
+
 
 }

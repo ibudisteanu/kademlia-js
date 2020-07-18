@@ -2,20 +2,28 @@ const Validation = require('./../helpers/validation')
 const ContactAddress = require('./contact-address')
 const StringUtils = require('./../helpers/string-utils')
 
+
 module.exports = class Contact{
 
-    constructor(identity, address ){
+    constructor(  kademliaNode, identity ){
 
         Validation.validateIdentity(identity)
+
+        this._kademliaNode = kademliaNode;
 
         this.identity = identity;
         this.identityHex = identity.toString('hex')
 
-        this.address = address;
+        this.address = new ContactAddress( ...arguments );
+
+        this._additionalParameters = 6;
+        for (let i=0; i < kademliaNode.pluginsContact.length; i++)
+            kademliaNode.pluginsContact[i].create.call(this, ...arguments);
+
     }
 
     clone(){
-        return new Contact( Buffer.from( this.identityHex, 'hex'), this.address.clone() );
+        return Contact.fromArray( this._kademliaNode, this.toArray() );
     }
 
     //used for bencode
@@ -24,13 +32,14 @@ module.exports = class Contact{
     }
 
     //used for bencode
-    static fromArray(arr){
-        return new Contact( arr[0], ContactAddress.fromArray( arr, 1 ) );
+    static fromArray(kademliaNode, arr){
+
+        arr.unshift(kademliaNode);
+        arr[3] = arr[3].toString('ascii');
+        arr[5] = arr[5].toString('ascii');
+
+        return new Contact( ...arr );
     }
 
-    static createNewContact(address){
-        const identity = Buffer.from( StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH));
-        return new Contact(identity, address);
-    }
 
 }

@@ -1,4 +1,3 @@
-const { randomBytes } = require('crypto');
 
 module.exports = {
 
@@ -11,9 +10,6 @@ module.exports = {
         return output;
     },
 
-    genBuffer(len) {
-        return  randomBytes(len);
-    }
 
 
 }

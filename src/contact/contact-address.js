@@ -2,7 +2,7 @@ const Validation = require('./../helpers/validation')
 
 module.exports = class ContactAddress {
 
-    constructor( protocol, hostname, port, path) {
+    constructor( kademliaNode, identity, protocol, hostname, port, path ) {
 
         Validation.validateProtocol(protocol);
         Validation.validateHostname(hostname);
@@ -15,16 +15,8 @@ module.exports = class ContactAddress {
         this.path = path;
     }
 
-    clone(){
-        return new ContactAddress( this.protocol, this.hostname, this.port, this.path );
-    }
-
     toArray(){
         return [  this.protocol, Buffer.from(this.hostname, "ascii"), this.port, Buffer.from(this.path, "ascii") ];
-    }
-
-    static fromArray(arr, offset ){
-        return new ContactAddress( arr[offset], arr[offset+1].toString(), arr[offset+2], arr[offset+3].toString() );
     }
 
 }

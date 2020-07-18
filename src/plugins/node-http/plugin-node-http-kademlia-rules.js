@@ -19,13 +19,6 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
     const _receive = kademliaRules.receive.bind(kademliaRules);
     kademliaRules.receive = receive;
 
-    const _store = kademliaRules.store.bind(kademliaRules);
-    kademliaRules.store = store;
-
-    const _sendStore = kademliaRules.sendStore.bind(kademliaRules);
-    kademliaRules.sendStore = sendStore;
-
-    kademliaRules._commands.STORE = store.bind(kademliaRules)
 
     function start(){
         _start(...arguments);
@@ -78,7 +71,7 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
                     return cb(null, decoded);
                 } else {
                     for (let i = 0; i < decoded[1].length; i++)
-                        decoded[1][i] = Contact.fromArray(decoded[1][i]);
+                        decoded[1][i] = Contact.fromArray(this._kademliaNode, decoded[1][i]);
                     return cb(null, decoded);
                 }
             }
@@ -95,7 +88,7 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
             return cb(new Error("Decoded data is invalid"));
 
         if (decoded[0].length)
-            decoded[0] = Contact.fromArray( decoded[0] )
+            decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
 
         decoded[1] = decoded[1].toString()
 
@@ -115,19 +108,5 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
 
     }
 
-    function store(srcContact, [table, key, value], cb) {
-        if (Buffer.isBuffer(value))
-            value = value.toString();
-
-        return _store(srcContact, [table, key, value], cb);
-    }
-
-    function sendStore(srcContact, [table, key, value], cb){
-
-        if ( Buffer.isBuffer(value) )
-            value = value.toString();
-
-        return _sendStore(srcContact, [table, key, value], cb);
-    }
 
 }

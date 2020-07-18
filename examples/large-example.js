@@ -13,13 +13,13 @@ const dataCount = 100;
 //addresses
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
-    contacts.push( new KAD.Contact(  KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,  new KAD.ContactAddress(protocol, '127.0.0.1', 10000 + i, '' )),)
+    contacts.push( new KAD.Contact(  KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,  new KAD.ContactAddress(protocol, '127.0.0.1', 10000 + i, '' )),)
 
 const files = [];
 for (let i=0; i < dataCount; i++)
     files.push({
-        key: KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
-        value: KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH )
+        key: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
+        value: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH )
     })
 
 function newStore(){

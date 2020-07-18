@@ -34,13 +34,13 @@ async.each( connections, ( connection, next) =>{
     nodes[connection[0]].bootstrap( contacts[ connection[1] ], false, next );
 }, (err, out)=> {
 
-    let query = KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH);
+    let query = KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH);
     nodes[4].crawler.iterativeFindSortedList('', query, (err, out)=>{
         console.log("iterativeFindSortedList", out);
         if (out) console.error('ERROR. Answer should have been undefined')
     })
 
-    let query2 = KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
+    let query2 = KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
     nodes[3].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), query2, 'query2_5', 5, (err, out)=>{
         console.log("iterativeStoreSortedListValue", out);
 

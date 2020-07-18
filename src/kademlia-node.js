@@ -1,30 +1,47 @@
 const RoutingTable = require('./routing-table/routing-table')
-const BufferUtils = require('./helpers/buffer-utils')
 const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
-const NextTick = require('./helpers/next-tick')
 const EventEmitter = require('events');
+const Contact = require('./contact/contact')
 
 module.exports = class KademliaNode extends EventEmitter {
 
-    constructor(contact, store, options = {}) {
+    constructor( plugins, contactArgs = {}, store, options = {}) {
 
         super();
 
-        this.contact = contact;
+        this.pluginsInstalled = [];
+        this.pluginsContact = [];
+
         this._store = store;
         this.routingTable = new RoutingTable(this);
         this.rules = new (options.KademliaRules || KademliaRules) (this, store);
         this.crawler = new Crawler(this);
 
+        for (const plugin of plugins)
+            this._use(plugin);
+
+        contactArgs.unshift( this );
+        this._contact = new Contact(...contactArgs);
+        this._contact.mine = true;
+
         this._started = false;
     }
 
+    get contact(){
+        return this._contact;
+    }
+
     //plugin
-    use(plugin){
+    _use(plugin){
 
         if (!plugin || typeof plugin !== "function" ) throw "Invalid plugin";
-        plugin(this);
+        const {name, version, success} = plugin(this);
+        this.pluginsInstalled.push({
+            name,
+            version,
+            success,
+        })
     }
 
     start() {
