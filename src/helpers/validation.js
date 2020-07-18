@@ -1,5 +1,7 @@
+const ContactAddressProtocolType = require('./../contact/contact-address-protocol-type')
+
 module.exports.validateProtocol = (protocol) => {
-    if (protocol !== 'udp' && protocol !== 'http' && protocol !== 'https') throw "invalid protocol";
+    if (!ContactAddressProtocolType._map[protocol]) throw "invalid protocol";
 }
 
 module.exports.validateHostname = (hostname) => {

@@ -3,6 +3,7 @@ const https = require('https');
 const EventEmitter = require('events');
 const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
 const uuid = require('uuid').v1;
+const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
 
 module.exports = class HTTPServer extends EventEmitter {
 
@@ -45,12 +46,15 @@ module.exports = class HTTPServer extends EventEmitter {
         return http.createServer();
     }
 
-    _createRequest(options) {
+    _createRequest(protocol, options) {
 
-        if (options.protocol === 'https')
-            return https.request(...arguments);
+        if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP)
+            return http.request(options);
 
-        return http.request(...arguments);
+        if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS)
+            return https.request(options);
+
+        throw "Invalid protocol type";
     }
 
     _read() {
@@ -92,9 +96,10 @@ module.exports = class HTTPServer extends EventEmitter {
         }
 
         // NB: If originating an outbound request...
-        let protocol = '';
-        if (destContact.address.protocol === 'http') protocol = '';
-        else if (destContact.address.protocol === 'https') protocol = 'https:';
+        let protocol;
+        if (destContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) protocol = '';
+        else if (destContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS) protocol = 'https:';
+        else throw "invalid protocol"
 
         const reqopts = {
             hostname: destContact.address.hostname,
@@ -110,7 +115,7 @@ module.exports = class HTTPServer extends EventEmitter {
         //optional path
         if ( destContact.address.path) reqopts.address.path = destContact.address.path;
 
-        const request = this._createRequest(reqopts);
+        const request = this._createRequest(destContact.address.protocol, reqopts);
 
         request.on('response', (response) => {
 

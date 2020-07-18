@@ -4,6 +4,8 @@ const async = require('async');
 KAD.init({});
 console.log("Large KAD");
 
+const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
+
 const nodesCount = 1000;
 const dataCount = 100;
 
@@ -11,7 +13,7 @@ const dataCount = 100;
 //addresses
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
-    contacts.push( new KAD.Contact(  KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,  new KAD.ContactAddress('http', '127.0.0.1', 10000 + i, '' )),)
+    contacts.push( new KAD.Contact(  KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,  new KAD.ContactAddress(protocol, '127.0.0.1', 10000 + i, '' )),)
 
 const files = [];
 for (let i=0; i < dataCount; i++)
