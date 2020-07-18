@@ -74,7 +74,7 @@ module.exports = class KademliaRules {
      */
     store(srcContact, [table, key, value], cb) {
 
-        if (!this._allowedStoreTables[table.toString('hex')])
+        if (!this._allowedStoreTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
@@ -85,7 +85,7 @@ module.exports = class KademliaRules {
 
     sendStore(contact, [table, key, value], cb ){
 
-        if (!this._allowedStoreTables[table.toString('hex')])
+        if (!this._allowedStoreTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
 
         this.send(contact,'STORE', [table, key, value], cb)

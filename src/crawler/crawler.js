@@ -203,7 +203,7 @@ module.exports = class Crawler {
     }
 
     iterativeStoreValue(table, key, value, cb){
-        return this._iterativeStoreValue(  [table, key, value], 'store', (data, next) => this._kademliaNode._store.put( table, key, value, next ), cb)
+        return this._iterativeStoreValue(  [table, key, value], 'store', (data, next) => this._kademliaNode._store.put( table.toString('hex'), key.toString('hex'), value, next ), cb)
     }
 
     _updateContactFound(contact, cb){

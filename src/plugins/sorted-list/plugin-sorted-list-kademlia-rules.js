@@ -16,7 +16,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
     function storeSortedListValue(srcContact, [table, key, value, score], cb){
 
-        if (!this._allowedStoreSortedListTables[table.toString('hex')])
+        if (!this._allowedStoreSortedListTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
@@ -27,7 +27,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
     function sendStoreSortedListValue(contact, [table, key, value, score], cb){
 
-        if (!this._allowedStoreSortedListTables[table.toString('hex')])
+        if (!this._allowedStoreSortedListTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
 
         this.send(contact,'STORE_SORTED_LIST_VALUE', [table, key, value, score], cb)
