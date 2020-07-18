@@ -1,5 +1,6 @@
 const Validation = require('./../../helpers/validation')
 const bencode = require('bencode');
+const Contact = require('./../../contact/contact')
 
 module.exports = function SortedListKademliaRules (kademliaRules) {
 

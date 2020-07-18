@@ -7,14 +7,14 @@ module.exports = function (kademliaRules) {
     if (kademliaRules._kademliaNode.hasPlugin('PluginNodeMock')){
 
         const _send = kademliaRules.send.bind(kademliaRules);
-        const _receive = kademliaRules.receive.bind(kademliaRules);
-
         kademliaRules.send = send;
+
+        const _receive = kademliaRules.receive.bind(kademliaRules);
         kademliaRules.receive = receive;
 
         function send(destContact, command, data, cb){
 
-            const buffer = bencode.encode( BufferHelper.serializeData([ command, ...data ] ) )
+            const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ] ) )
             const nonce = nacl.randomBytes(24);
 
             const box = nacl.box(
@@ -24,21 +24,22 @@ module.exports = function (kademliaRules) {
                 this._kademliaNode.contact.privateKey,
             )
 
-            _send(destContact, undefined, [ nonce, box ], cb);
+            _send(destContact, command, [ nonce, box ], cb);
         }
 
-        function receive( srcContact, command, [nonce, box], cb) {
+        function receive( buffer, cb){
+
+            const decoded = this.decodeReceiveAnswer(buffer);
+            if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
             const payload = nacl.box.open(
-                box,
-                nonce,
-                srcContact.publicKey,
+                decoded[2][1],
+                decoded[2][0],
+                decoded[0].publicKey,
                 this._kademliaNode.contact.privateKey,
             )
 
-            const decoded = bencode.decode(payload);
-
-            _receive(srcContact, decoded[0].toString('ascii'), decoded.slice(1), cb);
+            _receive(  payload, cb);
 
         }
 

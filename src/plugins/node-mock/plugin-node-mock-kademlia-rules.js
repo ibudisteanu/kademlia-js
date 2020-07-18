@@ -16,6 +16,8 @@ module.exports = function (kademliaRules) {
     const _receive = kademliaRules.receive.bind(kademliaRules);
     kademliaRules.receive = receive;
 
+    kademliaRules.sendMock = sendMock;
+
     function start() {
 
         _start(...arguments);
@@ -33,6 +35,11 @@ module.exports = function (kademliaRules) {
     function send(destContact, command, data, cb){
 
         const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
+        this.sendMock(destContact, command, buffer, cb);
+
+    }
+
+    function sendMock(destContact, command, buffer, cb){
 
         //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
@@ -41,17 +48,16 @@ module.exports = function (kademliaRules) {
         }
 
         setTimeout(()=>{
-           global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receive(  buffer, (err, out)=>{
+            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receive(  buffer, (err, out)=>{
 
-               if (err) return cb(err);
+                if (err) return cb(err);
 
-               const decoded = this.decodeSendAnswer(destContact, command, out);
-               if (!decoded) return cb(new Error('Error decoding data'));
+                const decoded = this.decodeSendAnswer(destContact, command, out);
+                if (!decoded) return cb(new Error('Error decoding data'));
 
-               cb(null, decoded);
-           } );
+                cb(null, decoded);
+            } );
         }, Math.floor( Math.random() * 100) + 10)
-
     }
 
     function receive( buffer, cb){
