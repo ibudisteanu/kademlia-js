@@ -5,36 +5,33 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
     kademliaRules._commands.FIND_SORTED_LIST = findSortedList.bind(kademliaRules);
     kademliaRules._commands.STORE_SORTED_LIST_VALUE = storeSortedListValue.bind(kademliaRules);
 
+    kademliaRules._allowedStoreSortedListTables = {
+        '': true,
+    };
+
     kademliaRules.storeSortedListValue = storeSortedListValue;
     kademliaRules.sendStoreSortedListValue = sendStoreSortedListValue;
     kademliaRules.findSortedList = findSortedList;
     kademliaRules.sendFindSortedList = sendFindSortedList;
 
-    function storeSortedListValue(srcContact, [key, value, score], cb){
+    function storeSortedListValue(srcContact, [table, key, value, score], cb){
 
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+        if (!this._allowedStoreSortedListTables[table.toString('hex')])
+            return cb(new Error('Table is not allowed'));
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.putSortedList(key.toString('hex'), value, score, cb);
+        this._store.putSortedList(table.toString('hex'), key.toString('hex'), value, score, cb);
 
     }
 
-    function sendStoreSortedListValue(contact, [key, value, score], cb){
+    function sendStoreSortedListValue(contact, [table, key, value, score], cb){
 
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+        if (!this._allowedStoreSortedListTables[table.toString('hex')])
+            return cb(new Error('Table is not allowed'));
 
-        this.send(contact,'STORE_SORTED_LIST_VALUE', [key, value, score], cb)
+        this.send(contact,'STORE_SORTED_LIST_VALUE', [table, key, value, score], cb)
+
     }
 
 
@@ -43,18 +40,11 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
      * @param key
      * @param cb
      */
-    function findSortedList(srcContact, [key], cb){
-
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+    function findSortedList(srcContact, [table, key], cb){
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.getSortedList(key, (err, out) => {
+        this._store.getSortedList(table.toString('hex'), key.toString('hex'), (err, out) => {
             //found the data
             if (out) cb(null, [ 1, out ] )
             else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(key) ] )
@@ -62,8 +52,8 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
 
     }
 
-    function sendFindSortedList(contact, key, cb){
-        this.send(contact, 'FIND_SORTED_LIST', [key], cb);
+    function sendFindSortedList(contact, table, key, cb){
+        this.send(contact, 'FIND_SORTED_LIST', [table, key], cb);
     }
 
 

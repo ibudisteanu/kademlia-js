@@ -17,56 +17,62 @@ module.exports = class StoreMemory extends Store{
         return this._memoryExpiration.entries();
     }
 
-    get(key, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
+    get(table = '', key, cb){
 
-        Validation.validateStoreKey(key);
-        cb( null, this._memory.get(key) );
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreKey(key);
+        if (err1 || err2) return cb(err1||err2);
+
+        cb( null, this._memory.get(table + ':'+ key) );
     }
 
-    put(key, value, cb){
+    put(table = '', key, value, cb){
 
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreKey(key);
+        const err3 = Validation.checkStoreData(value);
+        if (err1 || err2 || err3) return cb(err1||err2||err3);
 
-        Validation.validateStoreKey(key);
-        Validation.validateStoreData(value);
-
-        this._memory.set( key, value );
-        this._putExpiration(key, Date.now() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
+        this._memory.set( table + ':' + key, value );
+        this._putExpiration(table, key, Date.now() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
             cb( null, 1 );
         });
 
     }
 
-    del(key, cb){
+    del(table = '', key, cb){
 
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-        Validation.validateStoreKey(key);
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreKey(key);
+        if (err1 || err2) return cb(err1||err2);
 
-        if (!this._memory.get(key))
+        if (!this._memory.get(table + ':' + key))
             return cb(null, 0);
         else {
-            this._memory.delete(key);
-            this._delExpiration(key, ()=>{
+            this._memory.delete(table + ':' + key);
+            this._delExpiration(table, key, ()=>{
                 cb(null, 1)
             })
         }
     }
 
 
-    _getExpiration(key, cb){
-        cb( null, this._memoryExpiration.get(key+':exp') );
+    //table, key already verified
+    _getExpiration(table = '', key, cb){
+        cb( null, this._memoryExpiration.get(table + ':' + key+':exp') );
     }
 
-    _putExpiration(key, time, cb){
-        this._memoryExpiration.set(key+':exp', time);
+    //table, key already verified
+    _putExpiration(table = '', key, time, cb){
+        this._memoryExpiration.set(table + ':' + key+':exp', time);
         cb(null, 1);
     }
 
-    _delExpiration(key, cb){
+    //table, key already verified
+    _delExpiration(table = '', key, cb){
 
-        if (this._memoryExpiration.get(key)) {
-            this._memoryExpiration.delete(key + ':exp');
+        if (this._memoryExpiration.get(table + ':' + key)) {
+            this._memoryExpiration.delete(table + ':' + key + ':exp');
             cb(null, 1)
         } else
             cb(null, 0);

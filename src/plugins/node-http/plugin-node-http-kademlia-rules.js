@@ -61,7 +61,7 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
         const buffer = encodeData([ this._kademliaNode.contact, command, data ])
         this._server.write( id, destContact, buffer, (err, out)=>{
 
-            if (err) cb(err);
+            if (err) return cb(err);
 
             const decoded = bencode.decode(out);
 
@@ -115,19 +115,19 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
 
     }
 
-    function store(srcContact, [key, value], cb) {
+    function store(srcContact, [table, key, value], cb) {
         if (Buffer.isBuffer(value))
             value = value.toString();
 
-        return _store(srcContact, [key, value], cb);
+        return _store(srcContact, [table, key, value], cb);
     }
 
-    function sendStore(srcContact, [key, value], cb){
+    function sendStore(srcContact, [table, key, value], cb){
 
         if ( Buffer.isBuffer(value) )
             value = value.toString();
 
-        return _sendStore(srcContact, [key, value], cb);
+        return _sendStore(srcContact, [table, key, value], cb);
     }
 
 }

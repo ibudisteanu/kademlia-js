@@ -6,7 +6,7 @@ module.exports = class Contact{
 
     constructor(identity, address ){
 
-        Validation.validateIdentity(identity);
+        Validation.validateIdentity(identity)
 
         this.identity = identity;
         this.identityHex = identity.toString('hex')

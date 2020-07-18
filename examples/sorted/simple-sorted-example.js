@@ -32,22 +32,23 @@ async.each( connections, ( connection, next) =>{
     nodes[connection[0]].bootstrap( contacts[ connection[1] ], false, next );
 }, (err, out)=> {
 
-    let query = KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2);
-    nodes[4].crawler.iterativeFindSortedList(query, (err, out)=>{
+    let query = KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH);
+    nodes[4].crawler.iterativeFindSortedList('', query, (err, out)=>{
         console.log("iterativeFindSortedList", out);
+        if (out) console.error('ERROR. Answer should have been undefined')
     })
 
-    let query2 = KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2 );
-    nodes[3].crawler.iterativeStoreSortedListValue(query2, 'query2_5', 5, (err, out)=>{
+    let query2 = KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
+    nodes[3].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), query2, 'query2_5', 5, (err, out)=>{
         console.log("iterativeStoreSortedListValue", out);
 
-        nodes[1].crawler.iterativeStoreSortedListValue(query2, 'query2_2', 2, (err, out)=> {
+        nodes[1].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), query2, 'query2_2', 2, (err, out)=> {
             console.log("iterativeStoreSortedListValue", out);
 
-            nodes[4].crawler.iterativeStoreSortedListValue(query2, 'query2_8', 8, (err, out)=> {
+            nodes[4].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), query2, 'query2_8', 8, (err, out)=> {
                 console.log("iterativeStoreSortedListValue", out);
 
-                nodes[5].crawler.iterativeFindSortedList(query2, (err, out)=>{
+                nodes[5].crawler.iterativeFindSortedList( Buffer.alloc(0), query2, (err, out)=>{
                     console.log("iterativeFindSortedList", out);
                 })
 

@@ -6,26 +6,23 @@ module.exports = function PluginSortedListCrawler (crawler) {
     crawler.iterativeStoreSortedListValue  = iterativeStoreSortedListValue;
 
 
-    function iterativeFindSortedList(key, cb){
+    function iterativeFindSortedList(table, key, cb){
 
-        try{
-            if (typeof key === "string") key = Buffer.from(key, "hex");
-            Validation.validateIdentity(key);
-        }catch(err){
-            return cb(err);
-        }
+        const err1 = Validation.checkIdentity(key);
+        const err2 = Validation.checkTable(table);
+        if (err1 || err2) return cb(err1||err2);
 
-        this._kademliaNode._store.getSortedList(key, (err, out)=>{
+        this._kademliaNode._store.getSortedList(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
             if (out) return cb(null, out);
-            this._iterativeFind('FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', key, cb);
+            this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', key, cb);
 
         });
 
     }
 
-    function iterativeStoreSortedListValue(key, value, score, cb){
-        return this._iterativeStoreValue( [key, value, score], 'storeSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( key, value, score, next ), cb)
+    function iterativeStoreSortedListValue(table, key, value, score, cb){
+        return this._iterativeStoreValue( [table, key, value, score], 'storeSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table, key, value, score, next ), cb)
     }
 
 

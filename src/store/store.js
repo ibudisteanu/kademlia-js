@@ -34,22 +34,22 @@ module.exports = class Store{
     _iteratorExpiration(){
     }
 
-    get(key, cb){
+    get(table = '', key, cb){
     }
 
-    put(key, value, cb){
+    put(table = '', key, value, cb){
     }
 
-    del(key, cb){
+    del(table = '', key, cb){
     }
 
-    getExpiration(key, cb){
+    getExpiration(table = '', key, cb){
     }
 
-    putExpiration(key, time, cb){
+    putExpiration(table = '', key, time, cb){
     }
 
-    delExpiration(key, cb){
+    delExpiration(table = '', key, cb){
     }
 
     //plugin

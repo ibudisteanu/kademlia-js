@@ -3,10 +3,13 @@ const BufferUtils = require('./helpers/buffer-utils')
 const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
 const NextTick = require('./helpers/next-tick')
+const EventEmitter = require('events');
 
-module.exports = class KademliaNode {
+module.exports = class KademliaNode extends EventEmitter {
 
     constructor(contact, store, options = {}) {
+
+        super();
 
         this.contact = contact;
         this._store = store;
@@ -28,6 +31,7 @@ module.exports = class KademliaNode {
         if (this._started) throw "Already started";
         this.routingTable.start();
         this.rules.start();
+        this.emit('status', true );
         this._started = true;
     }
 
@@ -35,6 +39,7 @@ module.exports = class KademliaNode {
         if (!this._started) throw "Already stopped";
         this.routingTable.stop();
         this.rules.stop();
+        this.emit('status', false );
         this._started = false;
     }
 
@@ -64,9 +69,14 @@ module.exports = class KademliaNode {
 
                 if (!first && this.routingTable.count === 1){
                     this.routingTable.removeContact( contact );
-                    return cb(new Error("Failed to discover nodes"));
+
+                    err = new Error("Failed to discover nodes")
+                    this.emit('join', err );
+                    return cb( err );
+
                 }
                 else{
+                    this.emit('join', out );
                     cb(err, out);
                 }
 

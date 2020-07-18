@@ -18,6 +18,10 @@ module.exports = class KademliaRules {
             'FIND_VALUE': this.findValue,
         }
 
+        this._allowedStoreTables = {
+            '': true,
+        };
+
     }
 
     start(){
@@ -68,30 +72,24 @@ module.exports = class KademliaRules {
      * @param value
      * @param cb
      */
-    store(srcContact, [key, value], cb) {
+    store(srcContact, [table, key, value], cb) {
 
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+        if (!this._allowedStoreTables[table.toString('hex')])
+            return cb(new Error('Table is not allowed'));
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.put(key, value, cb);
+        this._store.put(table.toString('hex'), key.toString('hex'), value, cb);
+
     }
 
-    sendStore(contact, [key, value], cb){
+    sendStore(contact, [table, key, value], cb ){
 
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+        if (!this._allowedStoreTables[table.toString('hex')])
+            return cb(new Error('Table is not allowed'));
 
-        this.send(contact,'STORE', [key, value], cb)
+        this.send(contact,'STORE', [table, key, value], cb)
+
     }
 
     /**
@@ -101,12 +99,8 @@ module.exports = class KademliaRules {
      */
     findNode( srcContact, [key], cb ){
 
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+        const err = Validation.checkIdentity(key);
+        if (err) return cb(err);
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
@@ -122,18 +116,11 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findValue(srcContact, [key], cb){
-
-        try{
-            if (typeof key === "string")  key = Buffer.from(key, 'hex');
-            Validation.validateLookup(key);
-        }catch(err){
-            return cb(err);
-        }
+    findValue( srcContact, [table, key], cb){
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.get(key, (err, out) => {
+        this._store.get(table.toString('hex'), key.toString('hex'), (err, out) => {
             //found the data
             if (out) cb(null, [1, out] )
             else cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] )
@@ -141,8 +128,8 @@ module.exports = class KademliaRules {
 
     }
 
-    sendFindValue(contact, key, cb){
-        this.send(contact, 'FIND_VALUE', [key], cb);
+    sendFindValue(contact, table, key, cb){
+        this.send(contact, 'FIND_VALUE', [table, key], cb);
     }
 
 
@@ -185,7 +172,9 @@ module.exports = class KademliaRules {
 
         while (itValue.value && !itValue.done) {
 
-            const key = itValue.value[0];
+            const table = itValue.value[0].slice(  0, itValue.value[0].indexOf(':')  );
+            const key = itValue.value[0].slice(  itValue.value[0].indexOf(':') + 1);
+
             const value = itValue.value[1];
 
             const keyNode = Buffer.from(key, 'hex');
@@ -200,7 +189,7 @@ module.exports = class KademliaRules {
             }
 
             if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  )
-                return this.sendStore(contact, [key, value], (err, out) => {
+                return this.sendStore(contact, [ table, key, value], (err, out) => {
 
                     if (err)
                         return cb(err); //error

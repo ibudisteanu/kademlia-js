@@ -27,84 +27,87 @@ module.exports = function (store){
 
     store._memoryExpirationSortedList = new Map();
 
-    function getSortedList(key, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
+    function getSortedList(table, key, cb){
 
-        Validation.validateStoreKey(key);
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreKey(key);
+        if (err1 || err2) return cb(err1||err2);
 
-        const tree = this._memorySortedList.get(key);
+        const tree = this._memorySortedList.get(table + ':' + key);
         if (tree)
             cb( null, tree.toSortedArray('getValueKeyArray') );
         else
             cb( null, undefined );
     }
 
-    function putSortedList(key, value, score, cb){
-        
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-        if (Buffer.isBuffer(value)) value = value.toString('hex');
+    function putSortedList(table, key, value, score, cb){
 
-        Validation.validateStoreKey(key);
-        Validation.validateStoreData(value);
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreKey(key);
+        const err3 = Validation.checkStoreData(value);
+        const err4 = Validation.checkStoreScore(score);
+        if (err1 || err2 || err3||err4) return cb(err1||err2||err3||err4);
 
-        let tree = this._memorySortedList.get(key);
+        let tree = this._memorySortedList.get(table + ':' + key);
         if (!tree) {
             tree = new RedBlackTree();
-            this._memorySortedList.set(key, tree );
+            this._memorySortedList.set(table + ':' + key, tree );
         }
 
-        const foundNode = this._memorySortedListKeyNodesMap.get(key + ':' + value );
+        const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' +key + ':' + value );
         if (foundNode) {
 
             if (foundNode.key === score)
                 return cb(null, 1);
             else {
                 //TODO optimization to avoid removing and inserting
+                //TODO thus saving O(logN)
                 tree.removeNode(foundNode);
             }
 
         }
 
         const newNode = tree.insert( score, value );
-        this._memorySortedListKeyNodesMap.set(key+':'+value, newNode );
+        this._memorySortedListKeyNodesMap.set(table + ':' +key+':'+value, newNode );
 
-        this._putExpirationSortedList( key, { node: newNode, value, time: Date.now() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
+        this._putExpirationSortedList( table, key, { node: newNode, value, time: Date.now() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
             cb(null, 1);
         });
 
     }
 
-    function delSortedList(key, value, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
+    function delSortedList(table, key, value, cb){
 
-        Validation.validateStoreKey(key);
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreKey(key);
+        const err3 = Validation.checkStoreData(value);
+        if (err1 || err2 || err3) return cb(err1||err2||err3);
 
-        const foundNode = this._memorySortedListKeyNodesMap.get(key + ':' + value );
+        const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + key + ':' + value );
         if (!foundNode) cb(null, 0);
 
-        const tree = this._memorySortedList.get(key);
+        const tree = this._memorySortedList.get(table + ':' + key);
         tree.removeNode(foundNode);
 
         if ( tree.isEmpty )
-            this._memorySortedList.delete( key );
+            this._memorySortedList.delete( table + ':' + key );
 
-        this._memorySortedListKeyNodesMap.delete(key+':'+value);
-        this._delExpirationSortedList(key+':'+value, ()=>{
+        this._memorySortedListKeyNodesMap.delete(table + ':' + key+':'+value);
+        this._delExpirationSortedList(table + ':' + key+':'+value, ()=>{
             cb(null, 1)
         });
     }
 
 
-    function _getExpirationSortedList(key, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-
-        cb( null, this._memoryExpirationSortedList.get(key+':exp') );
+    //table, key already verified
+    function _getExpirationSortedList(table, key, cb){
+        cb( null, this._memoryExpirationSortedList.get(table + ':' + key+':exp') );
     }
 
-    function _putExpirationSortedList(key, { node, value, time }, cb){
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
+    //table, key already verified
+    function _putExpirationSortedList(table, key, { node, value, time }, cb){
 
-        this._memoryExpirationSortedList.set( key+":"+value+':exp', {
+        this._memoryExpirationSortedList.set( table + ':' + key +':exp', {
             node,
             value,
             time,
@@ -113,16 +116,16 @@ module.exports = function (store){
         cb(null, 1);
     }
 
-    function _delExpirationSortedList(key, cb){
+    //table, key already verified
+    function _delExpirationSortedList(table, key, cb){
 
-        if (Buffer.isBuffer(key)) key = key.toString('hex');
-
-        if (this._memoryExpirationSortedList.get(key)) {
-            this._memoryExpirationSortedList.delete(key + ':exp');
+        if (this._memoryExpirationSortedList.get(table + ':' +key)) {
+            this._memoryExpirationSortedList.delete(table + ':' + key + ':exp');
             cb(null, 1)
         } else
             cb(null, 0);
     }
+
 
     function iteratorSortedList(){
         return this._memorySortedListKeyNodesMap.entries();
@@ -163,8 +166,10 @@ module.exports = function (store){
             const {node, value, time} = it.value[1];
             if (time < Date.now() ){
 
-                const key = itValue.value[0].splice(0, itValue[0].length-4 );
-                this.delSortedList(key, value, next )
+                const str = itValue.value[0].splice(0, itValue[0].length-4 );
+                const table = str.slice(0, str.indexOf(':') ) ;
+                const key = str.slice(str.indexOf(':')+1 );
+                this.delSortedList(table, key, value, next )
             }
 
         } else {

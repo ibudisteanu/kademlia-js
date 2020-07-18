@@ -51,44 +51,40 @@ module.exports = class Crawler {
      */
     iterativeFindNode(key, cb){
 
-        try{
-            if (typeof key === "string") key = Buffer.from(key, "hex");
-            Validation.validateIdentity(key);
-        }catch(err){
-            return cb(err);
-        }
+        const  err = Validation.checkIdentity(key);
+        if (err) return cb(err);
 
-        this._iterativeFind('FIND_NODE', 'STORE', key, cb);
+        this._iterativeFind('', 'FIND_NODE', 'STORE', key, cb);
 
     }
 
-    iterativeFindValue(key, cb){
+    iterativeFindValue(table, key, cb){
 
-        try{
-            if (typeof key === "string") key = Buffer.from(key, "hex");
-            Validation.validateIdentity(key);
-        }catch(err){
-            return cb(err);
-        }
+        const err1 = Validation.checkIdentity(key);
+        const err2 = Validation.checkTable(table);
+        if (err1 || err2) return cb(err1||err2);
 
-        this._kademliaNode._store.get(key, (err, out)=>{
+        this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
             if (out) return cb(null, out);
-            this._iterativeFind('FIND_VALUE', 'STORE', key, cb);
+            this._iterativeFind( table,'FIND_VALUE', 'STORE', key, cb);
 
         });
 
     }
 
-    _sendStoreMissingKey(closestMissingValue, methodStore, key, data, cb ){
-        let out;
-        if (Array.isArray(data)) out = [key, ...data]
-        else out = [key, data];
+    _sendStoreMissingKey( table, closestMissingValue, methodStore, key, data, cb ){
 
-        this._kademliaNode.rules.send(closestMissingValue, methodStore, out, cb);
+        let out;
+        if (Array.isArray(data)) out = [table, key, ...data]
+        else out = [table,  key, data];
+
+        this._kademliaNode.rules.send( closestMissingValue, methodStore, out, cb);
     }
 
-    _iterativeFind(method, methodStore, key, cb){
+    _iterativeFind( table, method, methodStore, key, cb){
+
+        const data = ( method === 'FIND_NODE' ) ? [key] : [table, key];
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
 
@@ -104,7 +100,7 @@ module.exports = class Crawler {
             //mark this node as contacted so as to avoid repeats
             shortlist.contacted(contact);
 
-            this._kademliaNode.rules.send(contact, method, [key], (err, result) => {
+            this._kademliaNode.rules.send(contact, method, data , (err, result) => {
 
                 if (finished || err) return next(null, null);
 
@@ -130,11 +126,11 @@ module.exports = class Crawler {
                         if (Array.isArray(result[1])){
 
                             async.eachLimit(result[1], global.KAD_OPTIONS.ALPHA_CONCURRENCY,
-                                ( data, next ) => this._sendStoreMissingKey(closestMissingValue, methodStore, key, data, next ),
+                                ( data, next ) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, next ),
                                 ()=>{});
 
                         } else
-                        this._sendStoreMissingKey(closestMissingValue, methodStore, key,  result[1], ()=>{});
+                        this._sendStoreMissingKey(table, closestMissingValue, methodStore, key,  result[1], ()=>{});
                     }
 
                     //  we found a value, so stop searching
@@ -182,7 +178,7 @@ module.exports = class Crawler {
 
     _iterativeStoreValue( data, method, storeCb, cb){
 
-        const key = data[0];
+        const key = data[1];
 
         let stored = 0, self = this;
         function dispatchSendStore(contacts, done){
@@ -195,7 +191,7 @@ module.exports = class Crawler {
         }
 
         async.waterfall([
-            (next) => this.iterativeFindNode(key, next),
+            (next) => this.iterativeFindNode(  key, next),
             (contacts, next) => dispatchSendStore(contacts, next),
             (next) => storeCb(data, next),
         ], (err, out)=>{
@@ -206,8 +202,8 @@ module.exports = class Crawler {
 
     }
 
-    iterativeStoreValue(key, value, cb){
-        return this._iterativeStoreValue( [key, value], 'store', (data, next) => this._kademliaNode._store.put( key, value, next ), cb)
+    iterativeStoreValue(table, key, value, cb){
+        return this._iterativeStoreValue(  [table, key, value], 'store', (data, next) => this._kademliaNode._store.put( table, key, value, next ), cb)
     }
 
     _updateContactFound(contact, cb){

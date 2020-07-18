@@ -21,7 +21,8 @@ function newStore(){
 
 //creating kad nodes
 const nodes = contacts.map( contact => new KAD.KademliaNode(contact, newStore() ) )
-nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeMock ) );
+//nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeMock ) );
+nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeHTTP ) );
 
 nodes.map( it => it.start() );
 
@@ -31,16 +32,16 @@ async.each( connections, ( connection, next) =>{
     nodes[connection[0]].bootstrap( contacts[ connection[1] ], false, next );
 }, (err, out)=> {
 
-    let query = KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2 );
-    nodes[4].crawler.iterativeFindValue(query, (err, out)=>{
+    let query = KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
+    nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, (err, out)=>{
         console.log("iterativeFindValue", out);
     })
 
-    let query2 = KAD.helpers.StringUtils.genHexString(global.KAD_OPTIONS.NODE_ID_LENGTH*2 );
-    nodes[3].crawler.iterativeStoreValue(query2, 'query2', (err, out)=>{
+    let query2 = KAD.helpers.StringUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
+    nodes[3].crawler.iterativeStoreValue( Buffer.alloc(0), query2, 'query2', (err, out)=>{
         console.log("iterativeStoreValue", out);
 
-        nodes[5].crawler.iterativeFindValue(query2, (err, out)=>{
+        nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
             console.log("iterativeFindValue2", out);
         })
 
