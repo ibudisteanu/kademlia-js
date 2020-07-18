@@ -3,6 +3,8 @@ const BufferUtils = require('./helpers/buffer-utils')
 const NextTick = require('./helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('./helpers/async-interval')
 const {preventConvoy} = require('./helpers/utils')
+const bencode = require('bencode');
+const Contact = require('./contact/contact')
 
 module.exports = class KademliaRules {
 
@@ -219,6 +221,42 @@ module.exports = class KademliaRules {
                 delete this._replicatedStoreToNewNodesAlready[identityHex];
 
         next()
+    }
+
+    decodeSendAnswer(destContact, command, data){
+
+        const decoded = bencode.decode(data);
+
+        if (command === 'FIND_VALUE'  || command === 'FIND_NODE'  ){
+
+            if (command === 'FIND_VALUE' && decoded[0] === 1 ){
+                decoded[1] = decoded[1].toString();
+                return decoded;
+            } else {
+                for (let i = 0; i < decoded[1].length; i++)
+                    decoded[1][i] = Contact.fromArray(this._kademliaNode, decoded[1][i]);
+                return decoded;
+            }
+        }
+
+    }
+
+    decodeReceiveAnswer( buffer ){
+
+        try{
+
+            const decoded = bencode.decode(buffer);
+            if (!decoded) return null;
+
+            decoded[1] = decoded[1].toString()
+            decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
+
+            return decoded;
+
+        }catch(err){
+
+        }
+
     }
 
 }

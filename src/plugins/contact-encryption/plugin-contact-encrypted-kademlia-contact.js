@@ -1,7 +1,6 @@
 
 module.exports = function(kademliaNode) {
 
-
     kademliaNode.pluginsContact.push({
         create,
     })
@@ -20,9 +19,6 @@ module.exports = function(kademliaNode) {
             return [ ..._toArray(), this.publicKey ];
         }
 
-
     }
-
-
 
 }

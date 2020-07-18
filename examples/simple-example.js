@@ -54,8 +54,10 @@ function newStore(){
 //creating kad nodes
 const nodes = contacts.map(
     contact => new KAD.KademliaNode(
-        //[KAD.plugins.PluginKademliaNodeMock()],
-        [KAD.plugins.PluginKademliaNodeHTTP],
+        [
+            KAD.plugins.PluginKademliaNodeMock,
+            //KAD.plugins.PluginKademliaNodeHTTP,
+        ],
         contact,
         newStore()
     ) )

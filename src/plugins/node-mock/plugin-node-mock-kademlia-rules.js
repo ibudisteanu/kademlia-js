@@ -1,6 +1,8 @@
 const MOCKUP_SEND_ERROR_FREQUENCY = 0.001;
+const bencode = require('bencode');
+const BufferHelper = require('../../helpers/buffer-utils')
 
-module.exports = function PluginNodeMockKademliaRules(kademliaRules) {
+module.exports = function (kademliaRules) {
 
     const _start = kademliaRules.start.bind(kademliaRules);
     kademliaRules.start = start;
@@ -10,6 +12,9 @@ module.exports = function PluginNodeMockKademliaRules(kademliaRules) {
 
     const _send = kademliaRules.send.bind(kademliaRules);
     kademliaRules.send = send;
+
+    const _receive = kademliaRules.receive.bind(kademliaRules);
+    kademliaRules.receive = receive;
 
     function start() {
 
@@ -26,6 +31,9 @@ module.exports = function PluginNodeMockKademliaRules(kademliaRules) {
     }
 
     function send(destContact, command, data, cb){
+
+        const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
+
         //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
             console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.address.hostname, destContact.address.port );
@@ -33,8 +41,32 @@ module.exports = function PluginNodeMockKademliaRules(kademliaRules) {
         }
 
         setTimeout(()=>{
-           global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receive( this._kademliaNode.contact.clone(), command, data, cb );
+           global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receive(  buffer, (err, out)=>{
+
+               if (err) return cb(err);
+
+               const decoded = this.decodeSendAnswer(destContact, command, out);
+               if (!decoded) return cb(new Error('Error decoding data'));
+
+               cb(null, decoded);
+           } );
         }, Math.floor( Math.random() * 100) + 10)
+
+    }
+
+    function receive( buffer, cb){
+
+        const decoded = this.decodeReceiveAnswer(buffer);
+        if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
+
+        _receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
+
+            if (err) return cb(err);
+
+            const buffer = bencode.encode( BufferHelper.serializeData(out) );
+            cb(null, buffer);
+
+        });
 
     }
 

@@ -44,6 +44,12 @@ module.exports = class KademliaNode extends EventEmitter {
         })
     }
 
+    hasPlugin(pluginName){
+        for (const plugin of this.pluginsInstalled)
+            if (plugin.name === pluginName)
+                return plugin;
+    }
+
     start() {
         if (this._started) throw "Already started";
         this.routingTable.start();

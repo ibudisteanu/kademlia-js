@@ -2,8 +2,9 @@ const Contact = require('../../contact/contact')
 const HTTPServer = require('./http-server')
 const uuid = require('uuid').v1;
 const bencode = require('bencode');
+const BufferHelper = require('../../helpers/buffer-utils')
 
-module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
+module.exports = function (kademliaRules) {
 
     kademliaRules._server = new HTTPServer( kademliaRules._kademliaNode, receive.bind( kademliaRules) );
 
@@ -30,51 +31,19 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
         this._server.stop();
     }
 
-    function encodeData(data, level = 0){
 
-        if (data instanceof Contact)
-            data = data.toArray();
-        else
-        if (!Buffer.isBuffer(data) && typeof data === "object"){
-            for (const key in data)
-                data[key] = encodeData(data[key], level+1);
-        }
-
-        if (level === 0)
-            return bencode.encode(data);
-        else
-            return data;
-
-    }
 
     function send(destContact, command, data, cb){
 
         const id = uuid();
 
-        const buffer = encodeData([ this._kademliaNode.contact, command, data ])
+        const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
         this._server.write( id, destContact, buffer, (err, out)=>{
 
             if (err) return cb(err);
 
-            const decoded = bencode.decode(out);
-
-            if (command === 'FIND_VALUE' || command === 'FIND_SORTED_LIST' || command === 'FIND_NODE'  ){
-
-                if (command === 'FIND_VALUE' && decoded[0] === 1 ){
-                    decoded[1] = decoded[1].toString();
-                    return cb(null, decoded )
-                } else
-                if (command === 'FIND_SORTED_LIST' && decoded[0] === 1){
-                    for (let i=0; i < decoded[1].length; i++)
-                        decoded[1][i][0] = decoded[1][i][0].toString();
-
-                    return cb(null, decoded);
-                } else {
-                    for (let i = 0; i < decoded[1].length; i++)
-                        decoded[1][i] = Contact.fromArray(this._kademliaNode, decoded[1][i]);
-                    return cb(null, decoded);
-                }
-            }
+            const decoded = this.decodeSendAnswer(destContact, command, out);
+            if (!decoded) return cb(new Error('Error decoding data'));
 
             cb(null, decoded);
         } )
@@ -83,25 +52,14 @@ module.exports = function PluginNodeHTTPKademliaRules(kademliaRules) {
 
     function receive( buffer, cb){
 
-        const decoded = bencode.decode(buffer);
-        if (!decoded)
-            return cb(new Error("Decoded data is invalid"));
-
-        if (decoded[0].length)
-            decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
-
-        decoded[1] = decoded[1].toString()
+        const decoded = this.decodeReceiveAnswer(buffer);
+        if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
         _receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
 
             if (err) return cb(err);
 
-            if (Array.isArray(out))
-                for (let i=0; i < out.length; i++)
-                    if (out[i] instanceof Contact)
-                        out[i] = out[i].toArray();
-
-            const buffer = encodeData(out);
+            const buffer = bencode.encode( BufferHelper.serializeData(out) );
             cb(null, buffer);
 
         });
