@@ -35,15 +35,7 @@ module.exports = function (kademliaRules) {
         }
 
         setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized(  buffer, (err, out)=>{
-
-                if (err) return cb(err);
-
-                const decoded = this.decodeSendAnswer(destContact, command, out);
-                if (!decoded) return cb(new Error('Error decoding data'));
-
-                cb(null, decoded);
-            } );
+            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized(  undefined, buffer, cb );
         }, Math.floor( Math.random() * 100) + 10)
     }
 

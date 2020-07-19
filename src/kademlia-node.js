@@ -6,7 +6,7 @@ const Contact = require('./contact/contact')
 
 module.exports = class KademliaNode extends EventEmitter {
 
-    constructor( plugins, contactArgs = {}, store, options = {}) {
+    constructor( plugins = [], contactArgs = {}, store, options = {}) {
 
         super();
 

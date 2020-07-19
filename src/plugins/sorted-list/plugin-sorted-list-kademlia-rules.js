@@ -81,6 +81,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
                 return decoded;
             }
         }
+        return decoded;
     }
 
 }

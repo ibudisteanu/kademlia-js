@@ -12,9 +12,7 @@ const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HT
 const COUNT = 10;
 
 //addresses
-const contacts = [];
 const keyPairs = [];
-
 for (let i=0; i < COUNT; i++) {
     const key = nacl.box.keyPair.fromSecretKey(KAD.helpers.BufferUtils.genBuffer(32));
     keyPairs[i] = {
@@ -23,6 +21,7 @@ for (let i=0; i < COUNT; i++) {
     }
 }
 
+const contacts = [];
 for (let i=0; i < COUNT; i++)
     contacts[i] = [
         KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
@@ -41,16 +40,18 @@ function newStore(){
 const nodes = contacts.map(
     contact => new KAD.KademliaNode(
         [
-            //KAD.plugins.PluginKademliaNodeMock.plugin,
-            KAD.plugins.PluginKademliaNodeHTTP.plugin,
+            KAD.plugins.PluginKademliaNodeMock.plugin,
+            //KAD.plugins.PluginKademliaNodeHTTP.plugin,
             KAD.plugins.PluginContactEncrypted.plugin,
         ],
         contact,
         newStore()
     ) )
 
-nodes.forEach( (it, index) => it.contact.privateKey = keyPairs[index].privateKey );
-nodes.forEach( it => it.start() );
+nodes.forEach( (it, index) => {
+    it.contact.privateKey = keyPairs[index].privateKey
+    it.start()
+} );
 
 //encountering
 const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];

@@ -21,6 +21,7 @@ const AsyncInterval = require('./src/helpers/async-interval')
 
 const async = require('async');
 const bencode = require('bencode');
+const nacl = require('tweetnacl');
 
 module.exports = {
 
@@ -61,6 +62,7 @@ module.exports = {
     library: {
         async,
         bencode,
+        nacl,
     }
 
 }

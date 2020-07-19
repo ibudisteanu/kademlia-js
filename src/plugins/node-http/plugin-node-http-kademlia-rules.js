@@ -29,15 +29,7 @@ module.exports = function (kademliaRules) {
     function sendSerialized(destContact, command, buffer, cb){
 
         const id = uuid();
-        this._server.write( id, destContact, buffer, (err, out)=>{
-
-            if (err) return cb(err);
-
-            const decoded = this.decodeSendAnswer(destContact, command, out);
-            if (!decoded) return cb(new Error('Error decoding data'));
-
-            cb(null, decoded);
-        } )
+        this._server.write( id, destContact, buffer, cb )
 
     }
 

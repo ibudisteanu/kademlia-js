@@ -45,7 +45,12 @@ module.exports = class KademliaRules {
     send(destContact, command, data, cb){
 
         const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
-        this.sendSerialized(destContact, command, buffer, cb);
+        this.sendSerialized(destContact, command, buffer, (err, buffer)=>{
+
+            if (err) return cb(err);
+            this.sendReceivedSerialized(destContact, command, buffer, cb);
+
+        });
 
     }
 
@@ -53,9 +58,17 @@ module.exports = class KademliaRules {
         throw "not implemented";
     }
 
-    receiveSerialized(buffer, cb){
+    sendReceivedSerialized(destContact, command, buffer, cb){
 
-        const decoded = this.decodeReceiveAnswer(buffer);
+        const decoded = this.decodeSendAnswer(destContact, command, buffer);
+        if (!decoded) return cb(new Error('Error decoding data'));
+
+        cb(null, decoded);
+    }
+
+    receiveSerialized( srcContact, buffer, cb){
+
+        const decoded = this.decodeReceiveAnswer(srcContact, buffer);
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
         this.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
@@ -263,17 +276,22 @@ module.exports = class KademliaRules {
             }
         }
 
+        return decoded;
     }
 
-    decodeReceiveAnswer( buffer ){
+    decodeReceiveAnswer( srcContact, buffer ){
 
         try{
 
             const decoded = bencode.decode(buffer);
             if (!decoded) return null;
 
+            if (srcContact)
+                decoded.unshift(srcContact);
+            else
+                decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
+
             decoded[1] = decoded[1].toString()
-            decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
 
             return decoded;
 

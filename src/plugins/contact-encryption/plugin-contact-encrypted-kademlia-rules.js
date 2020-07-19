@@ -1,11 +1,14 @@
 const nacl = require('tweetnacl');
-const BufferHelper = require('../../helpers/buffer-utils')
 const bencode = require('bencode');
+const Contact = require('../../contact/contact')
 
 module.exports = function (kademliaRules) {
 
     const _send = kademliaRules.send.bind(kademliaRules);
     kademliaRules.send = send;
+
+    const _sendReceivedSerialized = kademliaRules.sendReceivedSerialized.bind(kademliaRules);
+    kademliaRules.sendReceivedSerialized = sendReceivedSerialized;
 
     const _receiveSerialized = kademliaRules.receiveSerialized.bind(kademliaRules);
     kademliaRules.receiveSerialized = receiveSerialized;
@@ -16,7 +19,8 @@ module.exports = function (kademliaRules) {
 
     function send(destContact, command, data, cb){
 
-        const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ] ) )
+        const buffer = bencode.encode([ command, data ]);
+
         const nonce = nacl.randomBytes(24);
 
         const box = nacl.box(
@@ -26,22 +30,72 @@ module.exports = function (kademliaRules) {
             this._kademliaNode.contact.privateKey,
         )
 
-        _send(destContact, command, [ nonce, box ], cb);
+        this.sendSerialized(destContact, command, bencode.encode( [ this._kademliaNode.contact.toArray(), nonce, Buffer.from(box) ] ), (err, buffer)=>{
+
+            if (err) return cb(err);
+            this.sendReceivedSerialized(destContact, nonce, command, buffer, cb);
+
+        });
+
     }
 
-    function receiveSerialized( buffer, cb){
 
-        const decoded = this.decodeReceiveAnswer(buffer);
-        if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
+    function sendReceivedSerialized(destContact, nonce, command, buffer, cb){
 
-        const payload = nacl.box.open(
-            decoded[2][1],
-            decoded[2][0],
-            decoded[0].publicKey,
-            this._kademliaNode.contact.privateKey,
-        )
+        try{
 
-        _receiveSerialized(  payload, cb);
+            const payload = nacl.box.open(
+                buffer,
+                nonce,
+                destContact.publicKey,
+                this._kademliaNode.contact.privateKey,
+            )
+
+            _sendReceivedSerialized(destContact, command, Buffer.from(payload) , cb );
+
+        }catch(err){
+            return cb(err);
+        }
+
+
+    }
+
+    function receiveSerialized( srcContact, buffer, cb){
+
+        const decoded = bencode.decode(buffer);
+        if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
+
+        try{
+
+            srcContact = Contact.fromArray( this._kademliaNode, decoded[0] )
+
+            const payload = nacl.box.open(
+                decoded[2],
+                decoded[1],
+                srcContact.publicKey,
+                this._kademliaNode.contact.privateKey,
+            )
+
+            _receiveSerialized( srcContact,  Buffer.from(payload), ( err, buffer )=>{
+
+                if (err) return cb(err);
+
+                const box = nacl.box(
+                    buffer,
+                    decoded[1],
+                    srcContact.publicKey,
+                    this._kademliaNode.contact.privateKey,
+                )
+
+                cb(null, Buffer.from(box) );
+
+            });
+
+        }catch(err){
+
+            cb(err);
+
+        }
 
     }
 
