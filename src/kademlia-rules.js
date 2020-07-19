@@ -25,6 +25,10 @@ module.exports = class KademliaRules {
             '': true,
         };
 
+        this._sendSerializedByProtocol = {
+
+        }
+
     }
 
     start(){
@@ -44,8 +48,11 @@ module.exports = class KademliaRules {
 
     send(destContact, command, data, cb){
 
+        const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
+        if (!sendSerialized) return cb(new Error('unknown protocol'));
+
         const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
-        this.sendSerialized(destContact, command, buffer, (err, buffer)=>{
+        sendSerialized(destContact, command, buffer, (err, buffer)=>{
 
             if (err) return cb(err);
             this.sendReceivedSerialized(destContact, command, buffer, cb);

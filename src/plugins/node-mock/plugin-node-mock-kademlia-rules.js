@@ -1,6 +1,5 @@
 const MOCKUP_SEND_ERROR_FREQUENCY = 0.001;
-const bencode = require('bencode');
-const BufferHelper = require('../../helpers/buffer-utils')
+const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
 
 module.exports = function (kademliaRules) {
 
@@ -10,7 +9,9 @@ module.exports = function (kademliaRules) {
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
 
-    kademliaRules.sendSerialized = sendSerialized;
+    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK === undefined) throw new Error('Mock protocol was not initialized.');
+    kademliaRules._sendSerializedByProtocol[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK] = sendSerialized.bind(kademliaRules);
+
 
     function start() {
 

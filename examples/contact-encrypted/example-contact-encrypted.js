@@ -41,7 +41,7 @@ const nodes = contacts.map(
     contact => new KAD.KademliaNode(
         [
             KAD.plugins.PluginKademliaNodeMock.plugin,
-            //KAD.plugins.PluginKademliaNodeHTTP.plugin,
+            KAD.plugins.PluginKademliaNodeHTTP.plugin,
             KAD.plugins.PluginContactEncrypted.plugin,
         ],
         contact,

@@ -1,8 +1,6 @@
-const Contact = require('../../contact/contact')
 const HTTPServer = require('./http-server')
 const uuid = require('uuid').v1;
-const bencode = require('bencode');
-const BufferHelper = require('../../helpers/buffer-utils')
+const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
 
 module.exports = function (kademliaRules) {
 
@@ -14,7 +12,9 @@ module.exports = function (kademliaRules) {
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
 
-    kademliaRules.sendSerialized = sendSerialized;
+    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP === undefined) throw new Error('HTTP protocol was not initialized.');
+    kademliaRules._sendSerializedByProtocol[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP] = sendSerialized.bind(kademliaRules);
+    kademliaRules._sendSerializedByProtocol[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS] = sendSerialized.bind(kademliaRules);
 
     function start(){
         _start(...arguments);
