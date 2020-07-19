@@ -8,7 +8,7 @@ console.log("Simple Encrypted Contact KAD");
 KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
 const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
-const COUNT = 10;
+const COUNT = 6;
 
 //addresses
 const keyPairs = [];

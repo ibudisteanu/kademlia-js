@@ -5,7 +5,7 @@ module.exports = function (kademliaNode){
     PluginNodeHTTPKademliaRules(kademliaNode.rules);
 
     return {
-        name: "PluginNodeHttp",
+        name: "PluginNodeHTTP",
         version: "0.1",
         success: true,
     }

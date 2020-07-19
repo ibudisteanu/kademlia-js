@@ -11,6 +11,7 @@ const RoutingTable = require('./src/routing-table/routing-table')
 
 const PluginKademliaNodeMock = require('./src/plugins/node-mock/index')
 const PluginKademliaNodeHTTP = require('./src/plugins/node-http/index')
+const PluginKademliaNodeWebSocket = require('./src/plugins/node-websocket/index')
 const PluginSortedList = require('./src/plugins/sorted-list/index')
 const PluginContactEncrypted = require('./src/plugins/contact-encryption/index')
 const PluginContactSpartacus = require('./src/plugins/contact-spartacus/index')
@@ -57,6 +58,7 @@ module.exports = {
     plugins: {
         PluginKademliaNodeMock,
         PluginKademliaNodeHTTP,
+        PluginKademliaNodeWebSocket,
         PluginSortedList,
         PluginContactEncrypted,
         PluginContactSpartacus,

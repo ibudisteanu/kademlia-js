@@ -7,6 +7,7 @@ console.log("Simple KAD");
 
 KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
+KAD.plugins.PluginKademliaNodeWebSocket.initialize();
 
 const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 
@@ -66,6 +67,7 @@ const nodes = contacts.map(
         [
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
+            KAD.plugins.PluginKademliaNodeWebSocket.plugin,
         ],
         contact,
         newStore()

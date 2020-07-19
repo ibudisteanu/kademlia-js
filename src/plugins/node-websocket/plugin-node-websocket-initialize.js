@@ -2,7 +2,7 @@ const ContactAddressProtocolType = require('./../../contact/contact-address-prot
 
 module.exports = function(){
 
-    ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK = 300;
-    ContactAddressProtocolType._map[300] = true;
+    ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET = 2;
+    ContactAddressProtocolType._map[2] = true;
 
 }
