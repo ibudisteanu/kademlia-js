@@ -13,21 +13,36 @@ const dataCount = 100;
 //addresses
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
-    contacts.push( new KAD.Contact(  KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,  new KAD.ContactAddress(protocol, '127.0.0.1', 10000 + i, '' )),)
+    contacts.push( [
+        KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,
+        protocol,
+        '127.0.0.1',
+        10000 + i,
+        '',
+    ] )
 
 const files = [];
 for (let i=0; i < dataCount; i++)
     files.push({
         key: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
-        value: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH )
+        value: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ).toString('hex')
     })
 
 function newStore(){
     return new KAD.StoreMemory();
 }
 
-const nodes = contacts.map( contact => new KAD.KademliaNode(contact, newStore() ) )
-nodes.forEach( node => node.use( KAD.plugins.PluginKademliaNodeHTTP ) )
+//creating kad nodes
+const nodes = contacts.map(
+    contact => new KAD.KademliaNode(
+        [
+            KAD.plugins.PluginKademliaNodeMock,
+            //KAD.plugins.PluginKademliaNodeHTTP,
+        ],
+        contact,
+        newStore()
+    ) )
+
 
 nodes.map( it => it.start() );
 
@@ -48,15 +63,15 @@ while (i < contacts.length) {
 }
 
 const outBootstrap = [], outFiles = [];
-nodes[0].bootstrap(contacts[1], true, ()=>{
+nodes[0].bootstrap( nodes[1].contact, true, ()=>{
 
-    nodes[0].bootstrap( contacts[2], true, () => {
+    nodes[0].bootstrap( nodes[2].contact, true, () => {
 
         async.eachLimit( nodesList, 25, (node, next) =>{
-            node.bootstrap( contacts[0], false, (err, out) => {
-                next(null, out)
+            node.bootstrap( nodes[0].contact, false, (err, out) => {
                 outBootstrap.push(out);
                 console.log("joined already",  outBootstrap.length);
+                next(null, out)
             } );
         }, (err, out)=>{
 
