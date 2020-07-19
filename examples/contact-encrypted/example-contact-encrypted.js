@@ -1,6 +1,5 @@
 const KAD = require('../../index');
 const async = require('async');
-const nacl = require('tweetnacl');
 
 KAD.init({});
 
@@ -14,16 +13,17 @@ const COUNT = 10;
 //addresses
 const keyPairs = [];
 for (let i=0; i < COUNT; i++) {
-    const key = nacl.box.keyPair.fromSecretKey(KAD.helpers.BufferUtils.genBuffer(32));
+    const privateKey = KAD.helpers.ECCUtils.createPrivateKey();
     keyPairs[i] = {
-        publicKey: Buffer.from(key.publicKey),
-        privateKey: Buffer.from(key.secretKey),
+        publicKey: KAD.helpers.ECCUtils.getPublicKey(privateKey),
+        privateKey
     }
 }
 
 const contacts = [];
 for (let i=0; i < COUNT; i++)
     contacts[i] = [
+        0,
         KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
         protocol,
         '127.0.0.1',

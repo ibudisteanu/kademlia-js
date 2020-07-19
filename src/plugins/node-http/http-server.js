@@ -185,7 +185,7 @@ module.exports = class HTTPServer extends EventEmitter {
                 response: res
             };
 
-            this.onReceive( undefined, buffer, (err, buffer)=>{
+            this.onReceive( buffer, (err, buffer)=>{
                 delete this._pending[id];
                 res.end(buffer);
             });

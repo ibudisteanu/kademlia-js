@@ -18,10 +18,10 @@ const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
 const Validation = require('./src/helpers/validation')
 const AsyncInterval = require('./src/helpers/async-interval')
+const ECCUtils = require('./src/helpers/ecc-utils')
 
 const async = require('async');
 const bencode = require('bencode');
-const nacl = require('tweetnacl');
 
 module.exports = {
 
@@ -50,6 +50,7 @@ module.exports = {
         StringUtils,
         Validation,
         AsyncInterval,
+        ECCUtils,
     },
 
     plugins: {
@@ -62,7 +63,6 @@ module.exports = {
     library: {
         async,
         bencode,
-        nacl,
     }
 
 }

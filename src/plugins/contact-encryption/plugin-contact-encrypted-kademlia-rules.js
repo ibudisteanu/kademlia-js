@@ -1,6 +1,7 @@
-const nacl = require('tweetnacl');
 const bencode = require('bencode');
 const Contact = require('../../contact/contact')
+const ECCUtils = require('../../helpers/ecc-utils')
+const BufferHelper = require('../../helpers/buffer-utils')
 
 module.exports = function (kademliaRules) {
 
@@ -19,87 +20,82 @@ module.exports = function (kademliaRules) {
 
     function send(destContact, command, data, cb){
 
-        const buffer = bencode.encode([ command, data ]);
-
-        const nonce = nacl.randomBytes(24);
-
-        const box = nacl.box(
-            buffer,
-            nonce,
-            destContact.publicKey,
-            this._kademliaNode.contact.privateKey,
-        )
-
-        const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
-        if (!sendSerialized) return cb(new Error('unknown protocol'));
-
-        sendSerialized(destContact, command, bencode.encode( [ this._kademliaNode.contact.toArray(), nonce, Buffer.from(box) ] ), (err, buffer)=>{
+        const buffer = bencode.encode([ this._kademliaNode.contact.toArray(), command, data ]);
+        ECCUtils.encrypt(destContact.publicKey, buffer, (err, out)=>{
 
             if (err) return cb(err);
-            this.sendReceivedSerialized(destContact, nonce, command, buffer, cb);
+
+            const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
+            if (!sendSerialized) return cb(new Error('unknown protocol'));
+
+            sendSerialized(destContact, command, bencode.encode( [ out.iv, out.ephemPublicKey, out.ciphertext, out.mac ] ), (err, buffer)=>{
+
+                if (err) return cb(err);
+                this.sendReceivedSerialized(destContact, command, buffer, cb);
+
+            });
+
+        })
+
+    }
+
+
+    function sendReceivedSerialized(destContact, command, buffer, cb){
+
+        const decoded = bencode.decode(buffer);
+        if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
+
+        ECCUtils.decrypt(this._kademliaNode.contact.privateKey,{
+            iv: decoded[0],
+            ephemPublicKey: decoded[1],
+            ciphertext: decoded[2],
+            mac: decoded[3],
+        }, (err, payload)=>{
+
+            if (err) return cb(err);
+
+            _sendReceivedSerialized(destContact, command, payload , cb );
 
         });
 
     }
 
-
-    function sendReceivedSerialized(destContact, nonce, command, buffer, cb){
-
-        try{
-
-            const payload = nacl.box.open(
-                buffer,
-                nonce,
-                destContact.publicKey,
-                this._kademliaNode.contact.privateKey,
-            )
-
-            _sendReceivedSerialized(destContact, command, Buffer.from(payload) , cb );
-
-        }catch(err){
-            return cb(err);
-        }
-
-
-    }
-
-    function receiveSerialized( srcContact, buffer, cb){
+    function receiveSerialized( buffer, cb){
 
         const decoded = bencode.decode(buffer);
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
-        try{
+        ECCUtils.decrypt(this._kademliaNode.contact.privateKey,{
+            iv: decoded[0],
+            ephemPublicKey: decoded[1],
+            ciphertext: decoded[2],
+            mac: decoded[3],
+        }, (err, payload)=>{
 
-            srcContact = Contact.fromArray( this._kademliaNode, decoded[0] )
+            if (err) return cb(err);
 
-            const payload = nacl.box.open(
-                decoded[2],
-                decoded[1],
-                srcContact.publicKey,
-                this._kademliaNode.contact.privateKey,
-            )
+            const decoded = this.decodeReceiveAnswer( payload );
+            if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
-            _receiveSerialized( srcContact,  Buffer.from(payload), ( err, buffer )=>{
+            this.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
 
                 if (err) return cb(err);
 
-                const box = nacl.box(
-                    buffer,
-                    decoded[1],
-                    srcContact.publicKey,
-                    this._kademliaNode.contact.privateKey,
-                )
+                const buffer = bencode.encode( BufferHelper.serializeData(out) );
+                ECCUtils.encrypt( decoded[0].publicKey, buffer, (err, out)=>{
 
-                cb(null, Buffer.from(box) );
+                    if (err) return cb(err);
+                    cb(null, bencode.encode( [ out.iv, out.ephemPublicKey, out.ciphertext, out.mac ] ));
+
+
+                });
 
             });
 
-        }catch(err){
 
-            cb(err);
-
-        }
+        })
 
     }
+
 
 }

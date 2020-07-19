@@ -8,7 +8,7 @@ module.exports = function(kademliaNode) {
     function create(  ){
 
         const publicKey = arguments[this._additionalParameters++];
-        if (!Buffer.isBuffer(publicKey) || publicKey.length !== 65) throw "Invalid Contact Public Key";
+        if (!Buffer.isBuffer(publicKey) || publicKey.length !== 32) throw "Invalid Contact Public Key";
         this.publicKey = publicKey;
 
         const _toArray = this.toArray.bind(this);

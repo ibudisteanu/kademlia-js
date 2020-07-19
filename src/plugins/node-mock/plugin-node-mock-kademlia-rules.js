@@ -36,7 +36,7 @@ module.exports = function (kademliaRules) {
         }
 
         setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized(  undefined, buffer, cb );
+            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized(  buffer, cb );
         }, Math.floor( Math.random() * 100) + 10)
     }
 

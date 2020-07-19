@@ -16,6 +16,7 @@ const dataCount = 100;
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
     contacts.push( [
+        0,
         KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,
         protocol,
         '127.0.0.1',

@@ -73,9 +73,9 @@ module.exports = class KademliaRules {
         cb(null, decoded);
     }
 
-    receiveSerialized( srcContact, buffer, cb){
+    receiveSerialized( buffer, cb){
 
-        const decoded = this.decodeReceiveAnswer(srcContact, buffer);
+        const decoded = this.decodeReceiveAnswer( buffer );
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
         this.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
@@ -286,18 +286,14 @@ module.exports = class KademliaRules {
         return decoded;
     }
 
-    decodeReceiveAnswer( srcContact, buffer ){
+    decodeReceiveAnswer(  buffer ){
 
         try{
 
             const decoded = bencode.decode(buffer);
             if (!decoded) return null;
 
-            if (srcContact)
-                decoded.unshift(srcContact);
-            else
-                decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
-
+            decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
             decoded[1] = decoded[1].toString()
 
             return decoded;
