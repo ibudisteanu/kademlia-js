@@ -19,7 +19,7 @@ module.exports = function(kademliaNode) {
 
         //used for bencode
         function toArray(){
-            return [ ..._toArray(), this.publicKey ];
+            return [ ..._toArray(...arguments), this.publicKey ];
         }
 
         function toJSON(){

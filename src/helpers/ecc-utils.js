@@ -13,13 +13,37 @@ module.exports =  {
     encrypt(publicKey, message, cb){
         eccrypto.encrypt(publicKey, message)
             .then( out => cb(null, out) )
-            .catch( err => cb(err ) )
+            .catch( cb )
     },
 
     decrypt(privateKey, message, cb){
         eccrypto.decrypt( privateKey, message, )
             .then( out => cb(null, out) )
-            .catch( err => cb(err ) )
+            .catch( cb )
     },
+
+    sign(privateKey, msg){
+
+        try{
+            const out = eccrypto.sign(privateKey, msg);
+            if (out.length !== 64) throw "invalid args";
+            return out;
+        }catch(err){
+
+        }
+
+    },
+
+    verifySignature(publicKey, msg, sig){
+
+        try{
+            const out = eccrypto.verify( publicKey, msg, sig);
+            if (out === true) return true;
+        }catch(err){
+
+        }
+
+        return false;
+    }
 
 }

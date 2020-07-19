@@ -1,4 +1,4 @@
-const plugin = require('./plugin-contact-spartacus')
+const plugin = require('./plugins-contact-spartacus')
 module.exports = {
     plugin,
 }

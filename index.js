@@ -13,6 +13,7 @@ const PluginKademliaNodeMock = require('./src/plugins/node-mock/index')
 const PluginKademliaNodeHTTP = require('./src/plugins/node-http/index')
 const PluginSortedList = require('./src/plugins/sorted-list/index')
 const PluginContactEncrypted = require('./src/plugins/contact-encryption/index')
+const PluginContactSpartacus = require('./src/plugins/contact-spartacus/index')
 
 const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
@@ -58,6 +59,7 @@ module.exports = {
         PluginKademliaNodeHTTP,
         PluginSortedList,
         PluginContactEncrypted,
+        PluginContactSpartacus,
     },
 
     library: {

@@ -30,6 +30,9 @@ for (let i=0; i < COUNT; i++)
         8000+i,
         '',
         keyPairs[i].publicKey,
+        KAD.helpers.BufferUtils.genBuffer( 64 ),
+        KAD.helpers.BufferUtils.genBuffer( 64 ),
+        true,
     ]
 
 function newStore(){
@@ -43,6 +46,7 @@ const nodes = contacts.map(
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
             KAD.plugins.PluginContactEncrypted.plugin,
+            KAD.plugins.PluginContactSpartacus.plugin,
         ],
         contact,
         newStore()
@@ -50,6 +54,8 @@ const nodes = contacts.map(
 
 nodes.forEach( (it, index) => {
     it.contact.privateKey = keyPairs[index].privateKey
+    const signature = it.contact.sign( );
+    it.contact.signature = signature;
     it.start()
 } );
 

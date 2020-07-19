@@ -28,7 +28,7 @@ module.exports = function (kademliaRules) {
             const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
             if (!sendSerialized) return cb(new Error('unknown protocol'));
 
-            sendSerialized(destContact, command, bencode.encode( [ out.iv, out.ephemPublicKey, out.ciphertext, out.mac ] ), (err, buffer)=>{
+            sendSerialized(destContact, command, bencode.encode( out ), (err, buffer)=>{
 
                 if (err) return cb(err);
                 this.sendReceivedSerialized(destContact, command, buffer, cb);
@@ -45,12 +45,7 @@ module.exports = function (kademliaRules) {
         const decoded = bencode.decode(buffer);
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
-        ECCUtils.decrypt(this._kademliaNode.contact.privateKey,{
-            iv: decoded[0],
-            ephemPublicKey: decoded[1],
-            ciphertext: decoded[2],
-            mac: decoded[3],
-        }, (err, payload)=>{
+        ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
 
             if (err) return cb(err);
 
@@ -65,12 +60,7 @@ module.exports = function (kademliaRules) {
         const decoded = bencode.decode(buffer);
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
-        ECCUtils.decrypt(this._kademliaNode.contact.privateKey,{
-            iv: decoded[0],
-            ephemPublicKey: decoded[1],
-            ciphertext: decoded[2],
-            mac: decoded[3],
-        }, (err, payload)=>{
+        ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
 
             if (err) return cb(err);
 
@@ -85,8 +75,7 @@ module.exports = function (kademliaRules) {
                 ECCUtils.encrypt( decoded[0].publicKey, buffer, (err, out)=>{
 
                     if (err) return cb(err);
-                    cb(null, bencode.encode( [ out.iv, out.ephemPublicKey, out.ciphertext, out.mac ] ));
-
+                    cb(null, bencode.encode( out ));
 
                 });
 
