@@ -24,14 +24,14 @@ const contacts = [];
 for (let i=0; i < COUNT; i++)
     contacts[i] = [
         0,
-        KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
+        Buffer.alloc( global.KAD_OPTIONS.NODE_ID_LENGTH ), //empty identity
         protocol,
         '127.0.0.1',
         8000+i,
         '',
         keyPairs[i].publicKey,
         KAD.helpers.BufferUtils.genBuffer( 64 ),
-        KAD.helpers.BufferUtils.genBuffer( 64 ),
+        Buffer.alloc(64), //empty signature
         true,
     ]
 
@@ -54,8 +54,8 @@ const nodes = contacts.map(
 
 nodes.forEach( (it, index) => {
     it.contact.privateKey = keyPairs[index].privateKey
-    const signature = it.contact.sign( );
-    it.contact.signature = signature;
+    it.contact.identity = it.contact.computeContactIdentity();
+    it.contact.signature = it.contact.sign( );
     it.start()
 } );
 

@@ -1,6 +1,6 @@
 const bencode = require('bencode');
 const ECCUtils = require('../../helpers/ecc-utils')
-const crypto = require('crypto');
+const CryptoUtils = require('../../helpers/crypto-utils')
 
 module.exports = function(kademliaNode) {
 
@@ -29,10 +29,21 @@ module.exports = function(kademliaNode) {
 
         this.sign = sign;
         this.verifySignature = verifySignature;
+        this.verifyContactIdentity = verifyContactIdentity;
+        this.computeContactIdentity = computeContactIdentity;
 
-        const skipVerifySignature = arguments[this._additionalParameters++];
-        if (!skipVerifySignature && !this.verifySignature())
-            throw "Invalid Contact Spartacus Signature";
+        const skipVerifySpartacus = arguments[this._additionalParameters++];
+        if (!skipVerifySpartacus ) {
+
+            //validate signature
+            if (!this.verifySignature() )
+                throw "Invalid Contact Spartacus Signature";
+
+            //validate identity
+            if (!this.verifyContactIdentity() )
+                throw "Invalid Contact Spartacus Identity";
+
+        }
 
         //used for bencode
         function toArray(notIncludeSignature){
@@ -57,15 +68,26 @@ module.exports = function(kademliaNode) {
         //sign signature
         function sign(){
             const buffer = bencode.encode( this.toArray(true) );
-            const msg = crypto.createHash("sha256").update(buffer).digest();
+            const msg = CryptoUtils.sha256(buffer);
             return ECCUtils.sign(this.privateKey, msg);
         }
 
         //verify signature
         function verifySignature(){
             const buffer = bencode.encode( this.toArray(true) );
-            const msg = crypto.createHash("sha256").update(buffer).digest();
+            const msg = CryptoUtils.sha256(buffer);
             return ECCUtils.verifySignature(this.publicKey, msg, this.signature );
+        }
+
+        function computeContactIdentity(){
+            const buffer = Buffer.concat([ this.nonce, this.publicKey ] );
+            const identity = CryptoUtils.sha256(buffer);
+            return identity;
+        }
+
+        function verifyContactIdentity(){
+            const identity = this.computeContactIdentity();
+            return this.identity.equals(identity);
         }
 
     }
