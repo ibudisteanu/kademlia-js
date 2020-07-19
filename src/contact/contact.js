@@ -41,5 +41,11 @@ module.exports = class Contact{
         return new Contact( ...arr );
     }
 
+    toJSON(){
+        return {
+            identity: this.identityHex,
+            address:this.address.toJSON(),
+        }
+    }
 
 }

@@ -5,6 +5,9 @@ KAD.init({});
 
 console.log("Simple KAD");
 
+KAD.plugins.PluginKademliaNodeMock.initialize();
+KAD.plugins.PluginKademliaNodeHTTP.initialize();
+
 const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 
 //addresses
@@ -55,8 +58,8 @@ function newStore(){
 const nodes = contacts.map(
     contact => new KAD.KademliaNode(
         [
-            //KAD.plugins.PluginKademliaNodeMock,
-            KAD.plugins.PluginKademliaNodeHTTP,
+            //KAD.plugins.PluginKademliaNodeMock.plugin,
+            KAD.plugins.PluginKademliaNodeHTTP.plugin,
         ],
         contact,
         newStore()

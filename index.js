@@ -9,10 +9,10 @@ const ContactAddressProtocolType = require('./src/contact/contact-address-protoc
 
 const RoutingTable = require('./src/routing-table/routing-table')
 
-const PluginKademliaNodeMock = require('./src/plugins/node-mock/plugin-node-mock')
-const PluginKademliaNodeHTTP = require('./src/plugins/node-http/plugin-node-http')
-const PluginSortedList = require('./src/plugins/sorted-list/plugin-sorted-list')
-const PluginContactEncrypted = require('./src/plugins/contact-encryption/plugin-contact-encryption')
+const PluginKademliaNodeMock = require('./src/plugins/node-mock/index')
+const PluginKademliaNodeHTTP = require('./src/plugins/node-http/index')
+const PluginSortedList = require('./src/plugins/sorted-list/index')
+const PluginContactEncrypted = require('./src/plugins/contact-encryption/index')
 
 const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')

@@ -6,6 +6,8 @@ KAD.init({});
 
 console.log("Simple Encrypted Contact KAD");
 
+KAD.plugins.PluginKademliaNodeMock.initialize();
+KAD.plugins.PluginKademliaNodeHTTP.initialize();
 const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 const COUNT = 10;
 
@@ -39,9 +41,9 @@ function newStore(){
 const nodes = contacts.map(
     contact => new KAD.KademliaNode(
         [
-            //KAD.plugins.PluginKademliaNodeMock,
-            KAD.plugins.PluginKademliaNodeHTTP,
-            KAD.plugins.PluginContactEncrypted,
+            //KAD.plugins.PluginKademliaNodeMock.plugin,
+            KAD.plugins.PluginKademliaNodeHTTP.plugin,
+            KAD.plugins.PluginContactEncrypted.plugin,
         ],
         contact,
         newStore()

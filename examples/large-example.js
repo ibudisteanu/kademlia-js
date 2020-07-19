@@ -4,6 +4,8 @@ const async = require('async');
 KAD.init({});
 console.log("Large KAD");
 
+KAD.plugins.PluginKademliaNodeMock.initialize();
+KAD.plugins.PluginKademliaNodeHTTP.initialize();
 const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 
 const nodesCount = 1000;
@@ -36,8 +38,8 @@ function newStore(){
 const nodes = contacts.map(
     contact => new KAD.KademliaNode(
         [
-            KAD.plugins.PluginKademliaNodeMock,
-            //KAD.plugins.PluginKademliaNodeHTTP,
+            KAD.plugins.PluginKademliaNodeMock.plugin,
+            //KAD.plugins.PluginKademliaNodeHTTP.plugin,
         ],
         contact,
         newStore()

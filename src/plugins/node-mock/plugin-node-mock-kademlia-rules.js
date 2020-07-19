@@ -10,7 +10,6 @@ module.exports = function (kademliaRules) {
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
 
-
     kademliaRules.sendSerialized = sendSerialized;
 
     function start() {
