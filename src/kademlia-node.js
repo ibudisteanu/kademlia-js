@@ -3,6 +3,7 @@ const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
 const EventEmitter = require('events');
 const Contact = require('./contact/contact')
+const KademliaNodePlugins = require('./plugins/kademlia-node-plugins')
 
 module.exports = class KademliaNode extends EventEmitter {
 
@@ -10,16 +11,14 @@ module.exports = class KademliaNode extends EventEmitter {
 
         super();
 
-        this.pluginsInstalled = [];
-        this.pluginsContact = [];
+        this.plugins = new KademliaNodePlugins(this);
 
         this._store = store;
         this.routingTable = new RoutingTable(this);
         this.rules = new (options.KademliaRules || KademliaRules) (this, store);
         this.crawler = new Crawler(this);
 
-        for (const plugin of plugins)
-            this._use(plugin);
+        this.plugins.install(plugins);
 
         contactArgs.unshift( this );
         this._contact = new Contact(...contactArgs);
@@ -32,23 +31,6 @@ module.exports = class KademliaNode extends EventEmitter {
         return this._contact;
     }
 
-    //plugin
-    _use(plugin){
-
-        if (!plugin || typeof plugin !== "function" ) throw "Invalid plugin";
-        const {name, version, success} = plugin(this);
-        this.pluginsInstalled.push({
-            name,
-            version,
-            success,
-        })
-    }
-
-    hasPlugin(pluginName){
-        for (const plugin of this.pluginsInstalled)
-            if (plugin.name === pluginName)
-                return plugin;
-    }
 
     start() {
         if (this._started) throw "Already started";

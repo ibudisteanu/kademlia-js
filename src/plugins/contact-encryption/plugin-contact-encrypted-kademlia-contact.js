@@ -1,7 +1,7 @@
 
 module.exports = function(kademliaNode) {
 
-    kademliaNode.pluginsContact.push({
+    kademliaNode.plugins.contactPlugins.push({
         create,
     })
 
