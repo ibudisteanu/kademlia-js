@@ -5,6 +5,7 @@ const {setAsyncInterval, clearAsyncInterval} = require('./helpers/async-interval
 const {preventConvoy} = require('./helpers/utils')
 const bencode = require('bencode');
 const Contact = require('./contact/contact')
+const BufferHelper = require('./helpers/buffer-utils')
 
 module.exports = class KademliaRules {
 
@@ -42,7 +43,30 @@ module.exports = class KademliaRules {
     }
 
     send(destContact, command, data, cb){
-        throw "not implemented"
+
+        const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
+        this.sendSerialized(destContact, command, buffer, cb);
+
+    }
+
+    sendSerialized(destContact, command, buffer, cb){
+        throw "not implemented";
+    }
+
+    receiveSerialized(buffer, cb){
+
+        const decoded = this.decodeReceiveAnswer(buffer);
+        if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
+
+        this.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
+
+            if (err) return cb(err);
+
+            const buffer = bencode.encode( BufferHelper.serializeData(out) );
+            cb(null, buffer);
+
+        });
+
     }
 
     receive(srcContact, command, data, cb){

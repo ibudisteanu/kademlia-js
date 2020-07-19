@@ -10,13 +10,8 @@ module.exports = function (kademliaRules) {
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
 
-    const _send = kademliaRules.send.bind(kademliaRules);
-    kademliaRules.send = send;
 
-    const _receive = kademliaRules.receive.bind(kademliaRules);
-    kademliaRules.receive = receive;
-
-    kademliaRules.sendMock = sendMock;
+    kademliaRules.sendSerialized = sendSerialized;
 
     function start() {
 
@@ -32,14 +27,7 @@ module.exports = function (kademliaRules) {
         delete global.KAD_MOCKUP[this._kademliaNode.contact.identityHex];
     }
 
-    function send(destContact, command, data, cb){
-
-        const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
-        this.sendMock(destContact, command, buffer, cb);
-
-    }
-
-    function sendMock(destContact, command, buffer, cb){
+    function sendSerialized(destContact, command, buffer, cb){
 
         //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
@@ -48,7 +36,7 @@ module.exports = function (kademliaRules) {
         }
 
         setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receive(  buffer, (err, out)=>{
+            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized(  buffer, (err, out)=>{
 
                 if (err) return cb(err);
 
@@ -60,20 +48,5 @@ module.exports = function (kademliaRules) {
         }, Math.floor( Math.random() * 100) + 10)
     }
 
-    function receive( buffer, cb){
-
-        const decoded = this.decodeReceiveAnswer(buffer);
-        if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
-
-        _receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
-
-            if (err) return cb(err);
-
-            const buffer = bencode.encode( BufferHelper.serializeData(out) );
-            cb(null, buffer);
-
-        });
-
-    }
 
 }
