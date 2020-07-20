@@ -33,14 +33,18 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
         this._kademliaNode.rules.webSocketActiveConnectionsMap[address] = ws;
 
-        ws.onmessage = (message) => {
+        ws.on('message', (buffer) => {
 
-            this._kademliaNode.rules.receiveSerialized( id, buffer, (err, buffer)=>{
-                delete this._pending[id];
-                res.end(buffer);
+            this._kademliaNode.rules.receiveSerialized( undefined, ws.contact, buffer, (err, buffer )=>{
+
+                if (err)
+                    return ;
+
+                ws.send(buffer);
+
             });
 
-        };
+        });
 
 
 

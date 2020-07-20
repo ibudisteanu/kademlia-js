@@ -25,7 +25,7 @@ module.exports = class KademliaRules {
             '': true,
         };
 
-        this._sendSerializedByProtocol = {
+        this._protocolSpecifics = {
 
         }
 
@@ -48,8 +48,8 @@ module.exports = class KademliaRules {
 
     send(destContact, command, data, cb){
 
-        const sendSerializedFct = this._sendSerializedByProtocol[destContact.address.protocol];
-        const {sendSerialized, id, buffer} = sendSerializedFct(destContact, command, data);
+        const {sendSerialize, sendSerialized} = this._protocolSpecifics[destContact.address.protocol];
+        const { id, buffer} = sendSerialize(destContact, command, data);
 
         sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
 
@@ -81,8 +81,9 @@ module.exports = class KademliaRules {
 
             if (err) return cb(err);
 
-            const buffer = bencode.encode( BufferHelper.serializeData(out) );
-            cb(null, buffer);
+            const {receiveSerialize} = this._protocolSpecifics[srcContact.address.protocol];
+            const buffer = receiveSerialize(id, srcContact, out );
+            cb(null, buffer );
 
         });
 
@@ -124,7 +125,7 @@ module.exports = class KademliaRules {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        this._store.put(table.toString('hex'), key.toString('hex'), value, cb);
+        this._store.put(table.toString('hex'), key.toString('hex'), value.toString('ascii'), cb);
 
     }
 
@@ -268,7 +269,9 @@ module.exports = class KademliaRules {
 
     decodeSendAnswer(destContact, command, data){
 
-        const decoded = bencode.decode(data);
+        let decoded;
+        if (!Buffer.isBuffer(data) ) decoded = data;
+        else decoded = bencode.decode(data);
 
         if (command === 'FIND_VALUE'  || command === 'FIND_NODE'  ){
 

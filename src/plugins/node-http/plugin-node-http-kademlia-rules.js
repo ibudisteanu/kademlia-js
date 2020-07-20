@@ -15,8 +15,22 @@ module.exports = function (kademliaRules) {
     kademliaRules.stop = stop;
 
     if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP === undefined) throw new Error('HTTP protocol was not initialized.');
-    kademliaRules._sendSerializedByProtocol[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP] = sendSerialized.bind(kademliaRules);
-    kademliaRules._sendSerializedByProtocol[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS] = sendSerialized.bind(kademliaRules);
+    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP] =
+    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS] = {
+        sendSerialize: (destContact, command, data) => {
+            const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+            return {
+                id,
+                buffer: bencode.encode( BufferHelper.serializeData([ kademliaRules._kademliaNode.contact, command, data ]) ),
+            }
+        },
+        sendSerialized: (id, destContact, command, buffer, cb) => {
+            kademliaRules._server.write( id, destContact, buffer, cb )
+        },
+        receiveSerialize: (id, srcContact, out ) => {
+            return bencode.encode( BufferHelper.serializeData(out) );
+        }
+    };
 
     function start(){
         _start(...arguments);
@@ -28,15 +42,5 @@ module.exports = function (kademliaRules) {
         this._server.stop();
     }
 
-    function sendSerialized(destContact, command, data){
-        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-        return {
-            id,
-            buffer: bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) ),
-            sendSerialized: (id, destContact, command, buffer, cb) => {
-                this._server.write( id, destContact, buffer, cb )
-            },
-        }
-    }
 
 }
