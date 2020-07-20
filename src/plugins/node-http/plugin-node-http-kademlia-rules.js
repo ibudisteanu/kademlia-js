@@ -26,9 +26,8 @@ module.exports = function (kademliaRules) {
         this._server.stop();
     }
 
-    function sendSerialized(destContact, command, buffer, cb){
+    function sendSerialized( id, destContact, command, buffer, cb){
 
-        const id = uuid();
         this._server.write( id, destContact, buffer, cb )
 
     }

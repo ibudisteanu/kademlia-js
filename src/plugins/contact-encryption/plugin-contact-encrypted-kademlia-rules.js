@@ -20,7 +20,9 @@ module.exports = function (kademliaRules) {
 
     function send(destContact, command, data, cb){
 
-        const buffer = bencode.encode([ this._kademliaNode.contact.toArray(), command, data ]);
+        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+
+        const buffer = bencode.encode([ id, this._kademliaNode.contact.toArray(), command, data ]);
         ECCUtils.encrypt(destContact.publicKey, buffer, (err, out)=>{
 
             if (err) return cb(err);
@@ -28,7 +30,7 @@ module.exports = function (kademliaRules) {
             const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
             if (!sendSerialized) return cb(new Error('unknown protocol'));
 
-            sendSerialized(destContact, command, bencode.encode( out ), (err, buffer)=>{
+            sendSerialized(id, destContact, command, bencode.encode( out ), (err, buffer)=>{
 
                 if (err) return cb(err);
                 this.sendReceivedSerialized(destContact, command, buffer, cb);
@@ -55,7 +57,7 @@ module.exports = function (kademliaRules) {
 
     }
 
-    function receiveSerialized( buffer, cb){
+    function receiveSerialized( id, buffer, cb){
 
         const decoded = bencode.decode(buffer);
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
@@ -67,12 +69,14 @@ module.exports = function (kademliaRules) {
             const decoded = this.decodeReceiveAnswer( payload );
             if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
-            this.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
+            if (decoded[0] !== id) return cb( new Error('Error! Invalid id'));
+
+            this.receive( decoded[0], decoded[1], decoded[2], decoded[3], (err, out)=>{
 
                 if (err) return cb(err);
 
                 const buffer = bencode.encode( BufferHelper.serializeData(out) );
-                ECCUtils.encrypt( decoded[0].publicKey, buffer, (err, out)=>{
+                ECCUtils.encrypt( decoded[1].publicKey, buffer, (err, out)=>{
 
                     if (err) return cb(err);
                     cb(null, bencode.encode( out ));

@@ -7,14 +7,10 @@ module.exports = class Contact{
 
     constructor(  kademliaNode, version, identity ){
 
-        Validation.validateIdentity(identity)
-
         this._kademliaNode = kademliaNode;
 
         this.version = version;
-
         this.identity = identity;
-        this.identityHex = identity.toString('hex')
 
         this.address = new ContactAddress( ...arguments );
 
@@ -51,6 +47,14 @@ module.exports = class Contact{
         }
     }
 
+    get identity(){
+        return this._identity;
+    }
 
+    set identity(newIdentity){
+        Validation.validateIdentity(newIdentity)
+        this._identity = newIdentity;
+        this.identityHex = this.identity.toString('hex')
+    }
 
 }

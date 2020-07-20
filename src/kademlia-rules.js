@@ -51,8 +51,9 @@ module.exports = class KademliaRules {
         const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
         if (!sendSerialized) return cb(new Error('unknown protocol'));
 
-        const buffer = bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) )
-        sendSerialized(destContact, command, buffer, (err, buffer)=>{
+        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+        const buffer = bencode.encode( BufferHelper.serializeData([ id, this._kademliaNode.contact, command, data ]) )
+        sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
 
             if (err) return cb(err);
             this.sendReceivedSerialized(destContact, command, buffer, cb);
@@ -73,12 +74,14 @@ module.exports = class KademliaRules {
         cb(null, decoded);
     }
 
-    receiveSerialized( buffer, cb){
+    receiveSerialized( id, buffer, cb){
 
         const decoded = this.decodeReceiveAnswer( buffer );
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
-        this.receive( decoded[0], decoded[1], decoded[2], (err, out)=>{
+        if (decoded[0] !== id) return cb( new Error('Error! Invalid id'));
+
+        this.receive( id, decoded[1], decoded[2], decoded[3], (err, out )=>{
 
             if (err) return cb(err);
 
@@ -89,7 +92,7 @@ module.exports = class KademliaRules {
 
     }
 
-    receive(srcContact, command, data, cb){
+    receive(id, srcContact, command, data, cb){
 
         if (this._commands[command])
             return this._commands[command].call(this, srcContact, data, cb);
@@ -293,8 +296,9 @@ module.exports = class KademliaRules {
             const decoded = bencode.decode(buffer);
             if (!decoded) return null;
 
-            decoded[0] = Contact.fromArray( this._kademliaNode, decoded[0] )
-            decoded[1] = decoded[1].toString()
+            decoded[0] = Number.parseInt(decoded[0]);
+            decoded[1] = Contact.fromArray( this._kademliaNode, decoded[1] )
+            decoded[2] = decoded[2].toString()
 
             return decoded;
 

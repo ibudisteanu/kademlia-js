@@ -127,6 +127,7 @@ module.exports = class HTTPServer extends EventEmitter {
             response.on('data', (chunk) => {
                 data.push(chunk);
             }).on('end', () => {
+
                 if (response.statusCode >= 400) {
                     const err = new Error(buffer.toString());
                     err.dispose = id;
@@ -156,7 +157,13 @@ module.exports = class HTTPServer extends EventEmitter {
 
         req.on('error', err => this.emit('error', err));
 
-        const id = req.headers['x-kad-id'];
+        let id;
+        try {
+            id = Number.parseInt(req.headers['x-kad-id']);
+        }catch(err){
+
+        }
+
         if (!id) {
             res.statusCode = 400;
             return res.end();
@@ -185,7 +192,7 @@ module.exports = class HTTPServer extends EventEmitter {
                 response: res
             };
 
-            this.onReceive( buffer, (err, buffer)=>{
+            this.onReceive( id, buffer, (err, buffer)=>{
                 delete this._pending[id];
                 res.end(buffer);
             });

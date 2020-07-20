@@ -27,7 +27,7 @@ module.exports = function (kademliaRules) {
         delete global.KAD_MOCKUP[this._kademliaNode.contact.identityHex];
     }
 
-    function sendSerialized(destContact, command, buffer, cb){
+    function sendSerialized(id, destContact, command, buffer, cb){
 
         //fake some unreachbility
         if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
@@ -36,7 +36,7 @@ module.exports = function (kademliaRules) {
         }
 
         setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized(  buffer, cb );
+            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized( id, buffer, cb );
         }, Math.floor( Math.random() * 100) + 10)
     }
 
