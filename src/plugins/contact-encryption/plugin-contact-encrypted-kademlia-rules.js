@@ -20,8 +20,8 @@ module.exports = function (kademliaRules) {
 
     function send(destContact, command, data, cb){
 
-        const sendSerializedFct = this._sendSerializedByProtocol[destContact.address.protocol];
-        const {sendSerialized, id, buffer} = sendSerializedFct(destContact, command, data);
+        const {sendSerialize, sendSerialized} = this._protocolSpecifics[destContact.address.protocol];
+        const { id, buffer} = sendSerialize(destContact, command, data);
 
         ECCUtils.encrypt(destContact.publicKey, buffer, (err, out)=>{
 
@@ -41,7 +41,9 @@ module.exports = function (kademliaRules) {
 
     function sendReceivedSerialized(destContact, command, buffer, cb){
 
-        const decoded = bencode.decode(buffer);
+        if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
+        else decoded = buffer;
+
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
         ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
@@ -78,7 +80,10 @@ module.exports = function (kademliaRules) {
                 ECCUtils.encrypt( srcContact.publicKey, buffer, (err, out)=>{
 
                     if (err) return cb(err);
-                    cb(null, bencode.encode( out ));
+
+                    const {receiveSerialize} = this._protocolSpecifics[srcContact.address.protocol];
+                    const buffer = receiveSerialize(id, srcContact, out );
+                    cb(null, buffer );
 
                 });
 
