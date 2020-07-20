@@ -1,10 +1,12 @@
 const HTTPServer = require('./http-server')
 const uuid = require('uuid').v1;
 const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
+const bencode = require('bencode');
+const BufferHelper = require('../../helpers/buffer-utils')
 
 module.exports = function (kademliaRules) {
 
-    kademliaRules._server = new HTTPServer( kademliaRules._kademliaNode, kademliaRules.receiveSerialized.bind( kademliaRules) );
+    kademliaRules._server = new HTTPServer( kademliaRules._kademliaNode );
 
     const _start = kademliaRules.start.bind(kademliaRules);
     kademliaRules.start = start;
@@ -26,13 +28,15 @@ module.exports = function (kademliaRules) {
         this._server.stop();
     }
 
-    function sendSerialized( id, destContact, command, buffer, cb){
-
-        this._server.write( id, destContact, buffer, cb )
-
+    function sendSerialized(destContact, command, data){
+        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+        return {
+            id,
+            buffer: bencode.encode( BufferHelper.serializeData([ this._kademliaNode.contact, command, data ]) ),
+            sendSerialized: (id, destContact, command, buffer, cb) => {
+                this._server.write( id, destContact, buffer, cb )
+            },
+        }
     }
-
-
-
 
 }

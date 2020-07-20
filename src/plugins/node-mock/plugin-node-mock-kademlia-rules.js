@@ -1,5 +1,7 @@
 const MOCKUP_SEND_ERROR_FREQUENCY = 0.001;
 const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
+const bencode = require('bencode');
+const BufferHelper = require('../../helpers/buffer-utils')
 
 module.exports = function (kademliaRules) {
 
@@ -27,18 +29,26 @@ module.exports = function (kademliaRules) {
         delete global.KAD_MOCKUP[this._kademliaNode.contact.identityHex];
     }
 
-    function sendSerialized(id, destContact, command, buffer, cb){
+    function sendSerialized(destContact, command, data){
+        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+        return {
+            id,
+            buffer: bencode.encode( BufferHelper.serializeData([ id, this._kademliaNode.contact, command, data ]) ),
+            sendSerialized: (id, destContact, command, buffer, cb) => {
 
-        //fake some unreachbility
-        if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
-            console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.address.hostname, destContact.address.port );
-            return cb(new Error("Message couldn't be sent"), null);
+                //fake some unreachbility
+                if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
+                    console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.address.hostname, destContact.address.port );
+                    return cb(new Error("Message couldn't be sent"), null);
+                }
+
+                setTimeout(()=>{
+                    global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized( undefined, undefined, buffer, cb );
+                }, Math.floor( Math.random() * 100) + 10)
+            },
         }
-
-        setTimeout(()=>{
-            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized( id, buffer, cb );
-        }, Math.floor( Math.random() * 100) + 10)
     }
+
 
 
 }

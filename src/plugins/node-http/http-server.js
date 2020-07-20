@@ -6,13 +6,11 @@ const ContactAddressProtocolType = require('../../contact/contact-address-protoc
 
 module.exports = class HTTPServer extends EventEmitter {
 
-    constructor(kademliaNode, onReceive ) {
+    constructor(kademliaNode ) {
         super();
 
         this._kademliaNode = kademliaNode;
         this._started = false;
-
-        this.onReceive = onReceive;
 
         this._pending = {};
         this.server = this._createServer(this._options);
@@ -160,11 +158,8 @@ module.exports = class HTTPServer extends EventEmitter {
         let id;
         try {
             id = Number.parseInt(req.headers['x-kad-id']);
+            if (!id) throw "invalid id";
         }catch(err){
-
-        }
-
-        if (!id) {
             res.statusCode = 400;
             return res.end();
         }
@@ -192,7 +187,7 @@ module.exports = class HTTPServer extends EventEmitter {
                 response: res
             };
 
-            this.onReceive( id, buffer, (err, buffer)=>{
+            this._kademliaNode.rules.receiveSerialized( id, undefined, buffer, (err, buffer)=>{
                 delete this._pending[id];
                 res.end(buffer);
             });

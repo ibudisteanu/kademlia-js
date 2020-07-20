@@ -24,7 +24,7 @@ module.exports = function (kademliaRules){
     kademliaRules.createWebSocket = createWebSocket;
     kademliaRules.sendWebSocketWaitAnswer = sendWebSocketWaitAnswer;
 
-    function sendSerialized(destContact, command, buffer, cb){
+    function sendSerialized(id, destContact, command, buffer, cb){
 
         const protocol = (destContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) ? 'wss' : 'ws';
         const address = protocol + '://' + destContact.address.hostname + ':' + destContact.address.port + destContact.address.path;
@@ -62,7 +62,7 @@ module.exports = function (kademliaRules){
                 ws.contact = contact;
 
                 for (const data of ws._queue)
-                    ws.send( [data.id,  data.buffer]  )
+                    ws.send( data.buffer )
 
                 ws._queue = [];
             }

@@ -48,11 +48,9 @@ module.exports = class KademliaRules {
 
     send(destContact, command, data, cb){
 
-        const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
-        if (!sendSerialized) return cb(new Error('unknown protocol'));
+        const sendSerializedFct = this._sendSerializedByProtocol[destContact.address.protocol];
+        const {sendSerialized, id, buffer} = sendSerializedFct(destContact, command, data);
 
-        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-        const buffer = bencode.encode( BufferHelper.serializeData([ id, this._kademliaNode.contact, command, data ]) )
         sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
 
             if (err) return cb(err);
@@ -60,10 +58,6 @@ module.exports = class KademliaRules {
 
         });
 
-    }
-
-    sendSerialized(destContact, command, buffer, cb){
-        throw "not implemented";
     }
 
     sendReceivedSerialized(destContact, command, buffer, cb){
@@ -74,14 +68,16 @@ module.exports = class KademliaRules {
         cb(null, decoded);
     }
 
-    receiveSerialized( id, buffer, cb){
+    receiveSerialized( id, srcContact, buffer, cb){
 
-        const decoded = this.decodeReceiveAnswer( buffer );
+        const decoded = this.decodeReceiveAnswer( id, srcContact, buffer );
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
-        if (decoded[0] !== id) return cb( new Error('Error! Invalid id'));
+        let c = 0;
+        if (id === undefined) id = decoded[c++];
+        if (srcContact === undefined) srcContact = decoded[c++];
 
-        this.receive( id, decoded[1], decoded[2], decoded[3], (err, out )=>{
+        this.receive( id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
 
             if (err) return cb(err);
 
@@ -289,16 +285,21 @@ module.exports = class KademliaRules {
         return decoded;
     }
 
-    decodeReceiveAnswer(  buffer ){
+    decodeReceiveAnswer(  id, srcContact, buffer ){
 
         try{
 
             const decoded = bencode.decode(buffer);
             if (!decoded) return null;
 
-            decoded[0] = Number.parseInt(decoded[0]);
-            decoded[1] = Contact.fromArray( this._kademliaNode, decoded[1] )
-            decoded[2] = decoded[2].toString()
+            let c = 0;
+            if (id === undefined)
+                decoded[c] = Number.parseInt(decoded[c++]);
+
+            if (!srcContact)
+                decoded[c] = Contact.fromArray( this._kademliaNode, decoded[c++] )
+
+            decoded[c] = decoded[c++].toString()
 
             return decoded;
 

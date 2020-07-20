@@ -20,15 +20,12 @@ module.exports = function (kademliaRules) {
 
     function send(destContact, command, data, cb){
 
-        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+        const sendSerializedFct = this._sendSerializedByProtocol[destContact.address.protocol];
+        const {sendSerialized, id, buffer} = sendSerializedFct(destContact, command, data);
 
-        const buffer = bencode.encode([ id, this._kademliaNode.contact.toArray(), command, data ]);
         ECCUtils.encrypt(destContact.publicKey, buffer, (err, out)=>{
 
             if (err) return cb(err);
-
-            const sendSerialized = this._sendSerializedByProtocol[destContact.address.protocol];
-            if (!sendSerialized) return cb(new Error('unknown protocol'));
 
             sendSerialized(id, destContact, command, bencode.encode( out ), (err, buffer)=>{
 
@@ -57,7 +54,7 @@ module.exports = function (kademliaRules) {
 
     }
 
-    function receiveSerialized( id, buffer, cb){
+    function receiveSerialized( id, srcContact, buffer, cb){
 
         const decoded = bencode.decode(buffer);
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
@@ -66,17 +63,19 @@ module.exports = function (kademliaRules) {
 
             if (err) return cb(err);
 
-            const decoded = this.decodeReceiveAnswer( payload );
+            const decoded = this.decodeReceiveAnswer( id, srcContact, payload );
             if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
 
-            if (decoded[0] !== id) return cb( new Error('Error! Invalid id'));
+            let c = 0;
+            if (id === undefined) id = decoded[c++];
+            if (srcContact === undefined) srcContact = decoded[c++];
 
-            this.receive( decoded[0], decoded[1], decoded[2], decoded[3], (err, out)=>{
+            this.receive( id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
 
                 if (err) return cb(err);
 
                 const buffer = bencode.encode( BufferHelper.serializeData(out) );
-                ECCUtils.encrypt( decoded[1].publicKey, buffer, (err, out)=>{
+                ECCUtils.encrypt( srcContact.publicKey, buffer, (err, out)=>{
 
                     if (err) return cb(err);
                     cb(null, bencode.encode( out ));
