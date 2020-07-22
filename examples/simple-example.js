@@ -79,8 +79,18 @@ nodes.map( it => it.start() );
 
 //encountering
 const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
-async.each( connections, ( connection, next) =>{
-    nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, next );
+async.eachLimit( connections, 1, ( connection, next) =>{
+
+    nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, ()=>{
+
+        console.log("BOOTSTRAPING...");
+        //fix for websockets
+        setTimeout( ()=>{
+            next()
+        }, 300 );
+
+    } );
+
 }, (err, out)=> {
 
     let query = KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );

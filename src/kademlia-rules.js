@@ -48,6 +48,9 @@ module.exports = class KademliaRules {
 
     send(destContact, command, data, cb){
 
+        if ( destContact.identity.equals(this._kademliaNode.contact.identity) )
+            return cb(new Error("Can't contact myself"));
+
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[destContact.address.protocol];
         let { id, buffer } = sendSerialize(destContact, command, data);
 
