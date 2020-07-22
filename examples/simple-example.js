@@ -87,7 +87,7 @@ async.eachLimit( connections, 1, ( connection, next) =>{
         //fix for websockets
         setTimeout( ()=>{
             next()
-        }, 300 );
+        }, 200 );
 
     } );
 
