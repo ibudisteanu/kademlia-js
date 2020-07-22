@@ -49,11 +49,12 @@ module.exports = class KademliaRules {
     send(destContact, command, data, cb){
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[destContact.address.protocol];
-        const { id, buffer} = sendSerialize(destContact, command, data);
+        let { id, buffer } = sendSerialize(destContact, command, data);
 
         sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
 
             if (err) return cb(err);
+
             this.sendReceivedSerialized(destContact, command, buffer, cb);
 
         });
@@ -292,8 +293,9 @@ module.exports = class KademliaRules {
 
         try{
 
-            const decoded = bencode.decode(buffer);
-            if (!decoded) return null;
+            let decoded;
+            if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
+            else decoded = buffer;
 
             let c = 0;
             if (id === undefined)

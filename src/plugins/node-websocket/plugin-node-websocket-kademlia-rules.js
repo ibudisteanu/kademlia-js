@@ -24,41 +24,57 @@ module.exports = function (kademliaRules){
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             return {
                 id,
-                buffer: bencode.encode( BufferHelper.serializeData([ id, command, data ]) ),
+                buffer: bencode.encode( BufferHelper.serializeData([ command, data ] ) ),
             }
         },
-        sendSerialized: (id, destContact, command, buffer, cb) => {
+        sendSerialized: (id, destContact, command, data, cb) => {
+
+            const buffer = bencode.encode( [0, id, data] );
 
             const protocol = (destContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) ? 'wss' : 'ws';
             const address = protocol + '://' + destContact.address.hostname + ':' + destContact.address.port + destContact.address.path;
 
             let  ws = kademliaRules.webSocketActiveConnectionsMap[address];
             if (!ws)
-                ws = kademliaRules.createWebSocket(address);
+                ws = kademliaRules.createWebSocket(address, destContact);
 
             kademliaRules.sendWebSocketWaitAnswer(ws, id, buffer, cb);
 
         },
         receiveSerialize: (id, srcContact, out ) => {
-            return bencode.encode( BufferHelper.serializeData([id, out]) );
-        }
+            return bencode.encode( BufferHelper.serializeData([ 1, id, out] ) )
+        },
     }
 
     kademliaRules.createWebSocket = createWebSocket;
     kademliaRules.sendWebSocketWaitAnswer = sendWebSocketWaitAnswer;
+    kademliaRules.initializeWebSocket = initializeWebSocket;
 
     kademliaRules.socketsQueue = {};
 
-    function createWebSocket(address, cb){
+    function createWebSocket(address, srcContact ) {
 
-        const ws = new WebSocket( address , bencode.encode( this._kademliaNode.contact.toArray() ).toString('base64') );
+        const ws = new WebSocket(address, bencode.encode(this._kademliaNode.contact.toArray()).toString('base64'));
+        ws._kadInitialized = true;
+        ws._queue = [];
+        ws.contact = srcContact;
+
+        return this.initializeWebSocket(address, srcContact, ws);
+    }
+
+    function initializeWebSocket(address, srcContact, ws) {
+
         kademliaRules.webSocketActiveConnectionsMap[address] = ws;
         kademliaRules.webSocketActiveConnections.push(ws);
 
-        ws._kadInitialized = false;
-        ws._queue = [];
-
         ws.onopen = () => {
+
+            if (ws._queue) {
+                const copy = [...ws._queue];
+                ws._queue = [];
+                for (const data of copy)
+                    sendWebSocketWaitAnswer(ws, data.id, data.buffer, data.cb);
+            }
 
         }
         ws.onclose = () => {
@@ -67,26 +83,27 @@ module.exports = function (kademliaRules){
 
         ws.on('message',  (message) => {
 
-            if (!ws._kadInitialized){
-                const decoded = bencode.decode(message);
-                const contact = Contact.fromArray(this._kademliaNode, decoded);
-                ws._kadInitialized = true;
-                ws.contact = contact;
+            const decoded = bencode.decode(message);
+            const status = decoded[0];
+            const id = decoded[1];
 
-                const copy = [...ws._queue];
-                ws._queue = [];
+            if ( status === 1 ){ //received an answer
 
-                for (const data of copy)
-                    sendWebSocketWaitAnswer( ws, data.id, data.buffer, data.cb );
+                kademliaRules.socketsQueue[id].resolve( null, decoded[2] );
+                delete kademliaRules.socketsQueue[id];
 
             } else {
-                const decoded = bencode.decode(message);
-                const id = decoded[0];
 
-                kademliaRules.socketsQueue[id].resolve( null, decoded[1] );
-                delete kademliaRules.socketsQueue[id];
+                this._kademliaNode.rules.receiveSerialized( id, ws.contact, decoded[2], (err, buffer )=>{
+
+                    if (err)
+                        return;
+
+                    ws.send(buffer);
+
+                });
+
             }
-
 
         });
 
@@ -95,7 +112,7 @@ module.exports = function (kademliaRules){
 
     function sendWebSocketWaitAnswer(ws, id, buffer, cb){
 
-        if (!ws._kadInitialized)
+        if (ws.readyState !== 1)
             ws._queue.push( {id, buffer, cb} );
         else {
 

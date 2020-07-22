@@ -24,7 +24,8 @@ module.exports = function (kademliaRules) {
                 buffer: bencode.encode( BufferHelper.serializeData([ kademliaRules._kademliaNode.contact, command, data ]) ),
             }
         },
-        sendSerialized: (id, destContact, command, buffer, cb) => {
+        sendSerialized: (id, destContact, command, data, cb) => {
+            const buffer = bencode.encode( data );
             kademliaRules._server.write( id, destContact, buffer, cb )
         },
         receiveSerialize: (id, srcContact, out ) => {
